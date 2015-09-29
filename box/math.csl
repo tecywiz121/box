@@ -1,0 +1,12 @@
+#ifndef BOX_MATH_CSL
+#define BOX_MATH_CSL 1
+
+/**
+ * Perform a logical shift right on x by n bits.
+ * @param x integer The number to shift.
+ * @param n integer Shift by this many bits.
+ * @returns the input, shifted by n bits.
+ */
+#define bxASR(x,n) ((x >> n) & ~(((0x1 << 31) >> n) << 1))
+
+#endif /* BOX_MATH_CSL */

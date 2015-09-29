@@ -1,0 +1,47 @@
+#ifndef BOX_LOGGING_CSL
+#define BOX_LOGGING_CSL 1
+
+#ifndef BOX_LOG_LEVEL
+#define BOX_LOG_LEVEL 2
+#endif
+
+#ifndef BOX_LOG_FUNCTION
+#define BOX_LOG_FUNCTION(level, message) llOwnerSay(#level + ": " + message)
+#endif
+
+#if BOX_LOG_LEVEL >= 1
+#define BX_FATAL(x) BOX_LOG_FUNCTION(FATAL, x)
+#define BOX_LOG_FATAL 1
+#else
+#define BX_FATAL(x)
+#endif
+
+#if BOX_LOG_LEVEL >= 2
+#define BX_ERROR(x) BOX_LOG_FUNCTION(ERROR, x)
+#define BOX_LOG_ERROR 1
+#else
+#define BX_ERROR(x)
+#endif
+
+#if BOX_LOG_LEVEL >= 3
+#define BX_WARN(x) BOX_LOG_FUNCTION(WARN, x)
+#define BOX_LOG_WARN 1
+#else
+#define BX_WARN(x)
+#endif
+
+#if BOX_LOG_LEVEL >= 4
+#define BX_INFO(x) BOX_LOG_FUNCTION(INFO, x)
+#define BOX_LOG_INFO 1
+#else
+#define BX_INFO(x)
+#endif
+
+#if BOX_LOG_LEVEL >= 5
+#define BX_DEBUG(x) BOX_LOG_FUNCTION(DEBUG, x)
+#define BOX_LOG_DEBUG 1
+#else
+#define BX_DEBUG(x)
+#endif
+
+#endif /* BOX_LOGGING_CSL */

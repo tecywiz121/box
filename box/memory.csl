@@ -1,0 +1,6 @@
+#ifndef BOX_MEMORY_CSL
+#define BOX_MEMORY_CSL 1
+
+#define bxMove(a) ((a=[])+a)
+
+#endif /* BOX_MEMORY_CSL */

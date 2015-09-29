@@ -1,0 +1,109 @@
+#ifndef BOX_HASH_MAP_CSL
+#define BOX_HASH_MAP_CSL 1
+
+#include <box/hash.csl>
+
+#define bxHashMapData(x) bxHashMapData_##x
+#define bxHashMapCount(x) bxHashMapCount_##x
+
+#define bxHashMapSlots(l) (llGetListLength(bxHashMapData(l)) / 2)
+
+/**
+ * Get the underlying list index of the key for a given map index.
+ * @param x integer The map index
+ * @returns The index of the key of pair x.
+ */
+#define bxHashMapKeyIdx(x) (x*2)
+
+/**
+ * Get the key of the pair at index x.
+ * @param l HashMap The map to operate on.
+ * @param x integer The map index.
+ * @returns The string key of the pair x.
+ */
+#define bxHashMapKey(l, x) llList2String(bxHashMapData(l), bxHashMapKeyIdx(x))
+
+/**
+ * Get the underlying list index of the value for a given map index.
+ * @param x integer The map index
+ * @returns The index of the value of pair x.
+ */
+#define bxHashMapValIdx(x) (bxHashMapKeyIdx(x) + 1)
+
+/**
+ * Get the value of a pair as a string.
+ * @param l HashMap The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a string.
+ */
+#define bxHashMapVal2Str(l, x) llList2String(bxHashMapData(l), bxHashMapValIdx(x))
+
+/**
+ * Get the value of a pair as an integer.
+ * @param l HashMap The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as an integer.
+ */
+#define bxHashMapVal2Int(l, x) llList2Integer(bxHashMapData(l), bxHashMapValIdx(x))
+
+/**
+ * Get the value of a pair as a key.
+ * @param l HashMap The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a key.
+ */
+#define bxHashMapVal2Key(l, x) llList2Key(bxHashMapData(l), bxHashMapValIdx(x))
+
+/**
+ * Get the value of a pair as a float.
+ * @param l HashMap The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a float.
+ */
+#define bxHashMapVal2Float(l, x) llList2Float(bxHashMapData(l), bxHashMapValIdx(x))
+
+/**
+ * Get the value of a pair as a rotation.
+ * @param l HashMap The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a rotation.
+ */
+#define bxHashMapVal2Rot(l, x) llList2Rot(bxHashMapData(l), bxHashMapValIdx(x))
+
+integer _bxHashMapFindSlot(list data, string k)
+{
+    integer nSlots = llGetListLength(data) / 2;
+    integer slot = bxHashHsieh(k) % nSlots;
+    string fk = llList2String(data, bxHashMapKeyIdx(slot));
+    integer tk = llGetListEntryType(data, bxHashMapKeyIdx(slot));
+
+    while (fk != k && tk != TYPE_INTEGER)
+    {
+        slot = (slot + 1) % nSlots;
+        fk = llList2String(data, bxHashMapKeyIdx(slot));
+        tk = llGetListEntryType(data, bxHashMapKeyIdx(slot));
+    }
+
+    return slot;
+}
+
+#define bxHashMapFindSlot(l, k) _bxHashMapFindSlot(bxHashMapData(l), k)
+
+integer _bxHashMapIndexOf(list data, string k)
+{
+    integer slot = _bxHashMapFindSlot(data, k);
+    string fk = llList2String(data, bxHashMapKeyIdx(slot));
+
+    if (fk == k)
+    {
+        return slot;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+#define BOX_HASH_MAP(x) list bxHashMapData(x); integer bxHashMapCount(x);
+
+#endif /* BOX_HASH_MAP_CSL */

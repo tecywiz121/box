@@ -1,0 +1,172 @@
+#ifndef BOX_BINARY_MAP_CSL
+#define BOX_BINARY_MAP_CSL 1
+
+#include <box/memory.csl>
+#include <box/string.csl>
+
+/**
+ * Get the number of keys in the map.
+ * @param l list The map to operate on.
+ * @returns Number of keys in the map.
+ */
+#define bxBinMapSize(l) (llGetListLength(l) / 2)
+
+/**
+ * Get the underlying list index of the key for a given map index.
+ * @param x integer The map index
+ * @returns The index of the key of pair x.
+ */
+#define bxBinMapKeyIdx(x) (x * 2)
+
+/**
+ * Get the underlying list index of the value for a given map index.
+ * @param x integer The map index
+ * @returns The index of the value of pair x.
+ */
+#define bxBinMapValIdx(x) (bxBinMapKeyIdx(x)+1)
+
+/**
+ * Get the key of the pair at index x.
+ * @param l list    The map to operate on.
+ * @param x integer The map index.
+ * @returns The string key of the pair x.
+ */
+#define bxBinMapKey(l, x) llList2String(l, bxBinMapKeyIdx(x))
+
+/**
+ * Get the value of a pair as a string.
+ * @param l list    The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a string.
+ */
+#define bxBinMapVal2Str(l, x) llList2String(l, bxBinMapValIdx(x))
+
+/**
+ * Get the value of a pair as an integer.
+ * @param l list    The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as an integer.
+ */
+#define bxBinMapVal2Int(l, x) llList2Integer(l, bxBinMapValIdx(x))
+
+/**
+ * Get the value of a pair as a key.
+ * @param l list    The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a key.
+ */
+#define bxBinMapVal2Key(l, x) llList2Key(l, bxBinMapValIdx(x))
+
+/**
+ * Get the value of a pair as a float.
+ * @param l list    The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a float.
+ */
+#define bxBinMapVal2Float(l, x) llList2Float(l, bxBinMapValIdx(x))
+
+/**
+ * Get the value of a pair as a rotation.
+ * @param l list    The map to operate on.
+ * @param x integer The map index.
+ * @returns The value of pair x as a rotation.
+ */
+#define bxBinMapVal2Rot(l, x) llList2Rot(l, bxBinMapValIdx(x))
+
+/**
+ * Figures out where in the list a key should go.
+ * @param l list    The map to operate on.
+ * @param k string  The key to search for.
+ * @returns The index where key should be stored.
+ */
+integer bxBinMapSearch(list l, string k)
+{
+    integer length = bxBinMapSize(l);
+
+    if (0 == length)
+    {
+        return 0;
+    }
+
+    integer idxMax = length;
+    integer idxMin = 0;
+
+    while (idxMax >= idxMin)
+    {
+        integer idxMid = ((idxMax - idxMin) / 2) + idxMin;
+        integer cmp = bxStrCmp(bxBinMapKey(l, idxMid), k);
+
+        if (0 == cmp)
+        {
+            return idxMid;
+        }
+        else if (-1 == cmp)
+        {
+            idxMin = idxMid + 1;
+        }
+        else
+        {
+            idxMax = idxMid - 1;
+        }
+    }
+
+    return idxMax+1;
+}
+
+/**
+ * Find the pair the contains the given key in the map. If the key doesn't
+ * exist, return -1.
+ * @param l list    The map to operate on.
+ * @param k string  The key to search for.
+ * @returns -1 if the key doesn't exist, or else the index of the matching pair.
+ */
+integer bxBinMapIndexOf(list l, string k)
+{
+    integer idx = bxBinMapSearch(l, k);
+    if (idx < 0)                { return -1; }
+    if (idx >= bxBinMapSize(l))    { return -1; }
+    if (bxBinMapKey(l, idx) != k)  { return -1; }
+    return idx;
+}
+
+/**
+ * Removes a key/value pair from the given map. This operation modifies the map.
+ * @param l list    The map to operate on.
+ * @param x integer Index (as returned by bxBinMapIndexOf) to delete.
+ * @returns The map that was passed in.
+ */
+#define bxBinMapDelete(l, x) (l = llDeleteSubList(bxMove(l), bxBinMapKeyIdx(x), bxBinMapValIdx(x)))
+
+/**
+ * Inserts a key/value pair into the given map. This operation modifies the map.
+ * Does not perform any checks for duplicate keys. Prefer using bxBinMapSet.
+ * @param l list    The map to operate on.
+ * @param x integer Index (as returned by bxBinMapSearch) where the pair should
+ *                  be inserted.
+ * @param k string  The key to insert.
+ * @param v any     The value to insert.
+ * @returns The map that was passed in.
+ */
+#define bxBinMapInsert(l, x, k, v) (l = llListInsertList(bxMove(l), [k, v], bxBinMapKeyIdx(x)))
+
+/**
+ * Updates the value of an already existing key in a map. This operation
+ * modifies the map. Does not check if the key matches. Prefer using bxBinMapSet.
+ * @param l list    The map to operate on.
+ * @param x integer Index (as returned by bxBinMapSearch) where the pair should
+ *                  be replaced.
+ * @param v any     The value to replace.
+ * @returns The map that was passed in.
+ */
+#define bxBinMapUpdate(l, x, v) (l = llListReplaceList(bxMove(l), [v], bxBinMapValIdx(x), bxBinMapValIdx(x)))
+
+/**
+ * Sets a key in the map to the specified value. This operation modifies the
+ * map in place.
+ * @param l list    The map to operate on.
+ * @param k string  The key to set.
+ * @param v any     The value to replace.
+ */
+#define bxBinMapSet(l, k, v) do { integer _bxIdx = bxBinMapSearch(l, k); if (-1 == _bxIdx || bxBinMapSize(l) == _bxIdx) { bxBinMapInsert(l, _bxIdx, k, v); } else if (bxBinMapKey(l, _bxIdx) == k) { bxBinMapUpdate(l, _bxIdx, v); } else { bxBinMapInsert(l, _bxIdx, k, v); } } while (FALSE)
+
+#endif /* BOX_BINARY_MAP_CSL */

@@ -1,0 +1,58 @@
+#ifndef BOX_HASH_CSL
+#define BOX_HASH_CSL 1
+
+#include <box/string.csl>
+#include <box/math.csl>
+
+/**
+ * Calculate the hsieh hash of the given UTF-16 data. Also known as the
+ * Super Fast Hash. From http://www.azillionmonkeys.com/qed/hash.html
+ * @param data string The data to hash.
+ * @returns an integer value which is the hash of data.
+ */
+integer bxHashHsieh(string data)
+{
+    integer nData = llStringLength(data);
+    if (0 == nData)
+    {
+        return 0;
+    }
+
+    integer hash = nData*2;
+    integer rem = hash & 3;
+    integer pos = 0;
+    integer tmp;
+
+    nData = nData >> 1;
+
+    for (; nData > 0; nData--)
+    {
+        integer first = bxStrOrd(llGetSubString(data, pos, pos));
+        integer next  = bxStrOrd(llGetSubString(data, pos+1, pos+1));
+
+        hash += first;
+        tmp   = (next << 11) ^ hash;
+        hash  = (hash << 16) ^ tmp;
+        tmp   = bxLSR(hash, 11);
+        hash += tmp;
+        pos  += 2;
+    }
+
+    if (2 == rem)
+    {
+        hash += bxStrOrd(llGetSubString(data, pos, pos));
+        hash = hash ^ (hash << 11);
+        hash += bxLSR(hash, 17);
+    }
+
+    hash = hash ^ (hash << 3);
+    hash = hash + (bxLSR(hash, 5));
+    hash = hash ^ (hash << 4);
+    hash = hash + (bxLSR(hash, 17));
+    hash = hash ^ (hash << 25);
+    hash = hash + (bxLSR(hash, 6));
+
+    return hash;
+}
+
+#endif /* BOX_HASH_CSL */

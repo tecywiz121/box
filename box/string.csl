@@ -1,0 +1,35 @@
+#ifndef BOX_STRING_CSL
+#define BOX_STRING_CSL 1
+
+integer bxStrOrd(string chr)
+{
+    if ("" == chr)
+    {
+        return -1;
+    }
+
+    chr = llGetSubString(chr, 0, 0);
+    return llBase64ToInteger("AAAA" + llStringToBase64(chr));
+}
+
+/**
+ * Compares a to b, and returns:
+ *  0  if a == b
+ *  1  if a > b
+ *  -1 if a < b
+ */
+integer bxStrCmp(string a, string b)
+{
+    if (a == b) { return 0; }
+    list cmp = llListSort([a, b], 1, FALSE);
+    if (llList2String(cmp, 0) == a)
+    {
+        return 1;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+#endif /* BOX_STRING_CSL */
