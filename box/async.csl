@@ -1,0 +1,125 @@
+#ifndef BOX_ASYNC_CSL
+#define BOX_ASYNC_CSL 1
+
+#include <box/memory.csl>
+
+#define _BX_ASL(name) gBxAsync##name
+
+#define _BX_ASL_STRIDE (4)
+#define _bxAslExpiry(name, idx)     (llList2Float  (_BX_ASL(name),    idx*_BX_ASL_STRIDE))
+#define _bxAslChannel(name, idx)    (llList2Integer(_BX_ASL(name), 1+(idx*_BX_ASL_STRIDE)))
+#define _bxAslHandle(name, idx)     (llList2Integer(_BX_ASL(name), 2+(idx*_BX_ASL_STRIDE)))
+#define _bxAslType(name, idx)       (llList2Integer(_BX_ASL(name), 3+(idx*_BX_ASL_STRIDE)))
+
+
+/**
+ * Get the number of pending async requests.
+ * @param name void The name of the async group created with BOX_ASYNC.
+ */
+#define bxAsyncPendingCount(name) (llGetListLength(_BX_ASL(name)) / _BX_ASL_STRIDE)
+
+/**
+ * Create a new async group.
+ * @param name void The unique name of the group.
+ */
+#define BOX_ASYNC(name) list _BX_ASL(name);                                 \
+integer _bxAsyncBegin##name(integer type, float timeout, key sender)        \
+{                                                                           \
+    /* Save the expiry time */                                              \
+    timeout += llGetTime();                                                 \
+                                                                            \
+    /* Generate a unique channel */                                         \
+    integer channel;                                                        \
+    do {                                                                    \
+        channel = (integer)llFrand(65536)|((integer)llFrand(65536) << 16);  \
+        channel = channel | 0x80000000;                                     \
+    } while (llListFindList(_BX_ASL(name), [channel]) != -1);               \
+                                                                            \
+    /* Activate a listen on the channel */                                  \
+    integer handle = llListen(channel, "", sender, "");                     \
+                                                                            \
+    /* Sorted insert into the pending list */                               \
+    integer ii;                                                             \
+    for (ii = bxAsyncPendingCount(name) - 1; ii >= 0; ii--) {               \
+        if (_bxAslExpiry(name, ii) <= timeout) {                            \
+            jump break;                                                     \
+        }                                                                   \
+    }                                                                       \
+    @break;                                                                 \
+                                                                            \
+    ii += 1;                                                                \
+                                                                            \
+    _BX_ASL(name) = llListInsertList(bxMove(_BX_ASL(name)),                 \
+                                     [timeout, channel, handle, type],      \
+                                     ii*_BX_ASL_STRIDE);                    \
+                                                                            \
+    return channel;                                                         \
+}                                                                           \
+list _bxAsyncFinish##name(integer channel)                                  \
+{                                                                           \
+    integer ii;                                                             \
+    for (ii = bxAsyncPendingCount(name) - 1; ii >= 0; ii--) {               \
+        if (_bxAslChannel(name, ii) == channel) {                           \
+            llListenRemove(_bxAslHandle(name, ii));                         \
+            list result = [channel, _bxAslType(name, ii)];                  \
+            _BX_ASL(name) = llDeleteSubList(bxMove(_BX_ASL(name)),          \
+                                            ii*_BX_ASL_STRIDE,              \
+                                            (ii+1)*_BX_ASL_STRIDE-1);       \
+            return result;                                                  \
+        }                                                                   \
+    }                                                                       \
+                                                                            \
+    return [];                                                              \
+}                                                                           \
+list _bxAsyncExpire##name()                                                 \
+{                                                                           \
+    list result = [];                                                       \
+                                                                            \
+    float now = llGetTime();                                                \
+    integer n_pending = bxAsyncPendingCount(name);                          \
+    integer ii;                                                             \
+    for (ii = 0; ii < n_pending; ii++) {                                    \
+        if (_bxAslExpiry(name, ii) <= now) {                                \
+            result += [_bxAslChannel(name, ii), _bxAslType(name, ii)];      \
+        } else {                                                            \
+            jump break;                                                     \
+        }                                                                   \
+    }                                                                       \
+    @break;                                                                 \
+    n_pending = llGetListLength(result)/2;                                  \
+    if (n_pending > 0) {                                                    \
+        _BX_ASL(name) = llDeleteSubList(bxMove(_BX_ASL(name)),              \
+                                        0,                                  \
+                                        n_pending * _BX_ASL_STRIDE-1);      \
+    }                                                                       \
+    return result;                                                          \
+}
+
+/**
+ * Begins a new async request.
+ * @param name void The name of the async group created with BOX_ASYNC.
+ * @param type integer A number that uniquely identifies the 'type' of the
+ *                     request. Will be returned when the event finishes or
+ *                     expires.
+ * @param timeout float How many seconds to wait before giving up on the request.
+ * @param sender key Passed to the call to llListen.
+ * @returns The channel number assigned to this request.
+ */
+#define bxAsyncBegin(name, type, timeout, sender) _bxAsyncBegin##name(type, timeout, sender)
+
+/**
+ * Check for a completed outstanding requests on the given channel.
+ * @param name void The name of the async group created with BOX_ASYNC.
+ * @param channel integer The channel parameter from the listen event.
+ * @returns An empty list if no requests completed, or [channel, type].
+ */
+#define bxAsyncFinish(name, channel) _bxAsyncFinish##name(channel)
+
+/**
+ * Check for any expired outstanding requests.
+ * @param name void The name of the async group created with BOX_ASYNC.
+ * @returns A list of [channel, type, ...] pairs for each expired request.
+ */
+#define bxAsyncExpire(name) _bxAsyncExpire##name()
+
+#endif /* BOX_ASYNC_CSL */
