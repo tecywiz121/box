@@ -1,13 +1,6 @@
 #ifndef BOX_TIMER_CSL
 #define BOX_TIMER_CSL 1
 
-/*
- * TODO: Does not yet cope with time dilation. Not sure if that's important or
- *       what. If you absolutely need accurate time, or maybe just understand
- *       time dilation better, feel free to improve this, or remove this note as
- *       appropriate.
- */
-
 #include <box/memory.csl>
 
 #define _BX_TOKENPASTE(x, y) x ## y
@@ -28,13 +21,13 @@
 
 #define bxTimerCount(name) (llGetListLength(_BX_TGRP(name)) / _BX_TGRP_STRIDE)
 
-#define _BX_TTIME(name) gBxTimerScriptTime##name
+#define _BX_TDELTA(name) gBxTimerDelta##name
 
 #define _BX_TIMER_INSERT(group, id, mark, interval)                 \
 
 
 #define BOX_TIMER_GROUP(name)                                       \
-float _BX_TTIME(name);                                              \
+float _BX_TDELTA(name);                                             \
 list _BX_TGRP(name);                                                \
 _bxTimerInsert##name(list parts)                                    \
 {                                                                   \
@@ -48,21 +41,21 @@ _bxTimerInsert##name(list parts)                                    \
                                        parts,                       \
                                        __bxII*_BX_TGRP_STRIDE);     \
     if (0 == __bxII) {                                              \
-        llSetTimerEvent(mark-llGetTime());                          \
+        _BX_TDELTA(name) = mark;                                    \
+        llSetTimerEvent(mark);                                      \
     }                                                               \
 }                                                                   \
 _bxTimerStart##name(integer id, float interval)                     \
 {                                                                   \
-    _bxTimerInsert##name([interval + llGetTime(), id, interval]);   \
+    _bxTimerInsert##name([interval, id, interval]);                 \
 }                                                                   \
 _bxTimerOnce##name(integer id, float delay, integer handle)         \
 {                                                                   \
-    _bxTimerInsert##name([delay + llGetTime(), id, handle]);        \
+    _bxTimerInsert##name([delay, id, handle]);                      \
 }                                                                   \
 list _bxTimerTick##name()                                           \
 {                                                                   \
-    float now = llGetAndResetTime();                                \
-    _BX_TTIME(name) += now;                                         \
+    float now = _BX_TDELTA(name);                                   \
                                                                     \
     list expired;                                                   \
     integer ii;                                                     \
@@ -94,7 +87,7 @@ list _bxTimerTick##name()                                           \
             integer type = llGetListEntryType(expired, (ii*2)+1);   \
             if (type == BOX_TIMER_TYPE_INTERVAL) {                  \
                 float interval = llList2Float(expired, (ii*2)+1);   \
-                _bxTimerInsert##name([interval - llGetTime(),       \
+                _bxTimerInsert##name([interval,                     \
                                      llList2Integer(expired,(ii*2)),\
                                      interval]);                    \
             }                                                       \
@@ -103,9 +96,11 @@ list _bxTimerTick##name()                                           \
                                                                     \
     /* Finally, stop the lsl timer if no pending events */          \
     if (bxTimerCount(name) == 0) {                                  \
+        _BX_TDELTA(name) = 0.0;                                     \
         llSetTimerEvent(0.0);                                       \
     } else if (0 == n_expire) {                                     \
-        llSetTimerEvent(_bxTgrpMark(name, 0));                      \
+        _BX_TDELTA(name) = _bxTgrpMark(name, 0);                    \
+        llSetTimerEvent(_BX_TDELTA(name));                          \
     }                                                               \
     return expired;                                                 \
 }
@@ -117,8 +112,6 @@ list _bxTimerTick##name()                                           \
 #define bxTimerStopNext(group, id)
 #define bxTimerStopAll(group, id)
 #define bxTimerStopOnce(group, id, handle)
-
-#define bxTimerScriptTime(group) (_BX_TTIME(group) + llGetTime())
 
 #endif /* BOX_TIMER_CSL */
 /* vim: set et sw=4 sts=4 ts=4: */
