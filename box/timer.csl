@@ -19,13 +19,18 @@
 #define BOX_TIMER_TYPE_INTERVAL TYPE_FLOAT
 #define _bxTgrpType(n, idx) (llGetListEntryType(_BX_TGRP(n), 2+(idx*_BX_TGRP_STRIDE)))
 
+/**
+ * Get the number of active timers.
+ * @param name void The name of the timer group created with BOX_TIMER_GROUP.
+ */
 #define bxTimerCount(name) (llGetListLength(_BX_TGRP(name)) / _BX_TGRP_STRIDE)
 
 #define _BX_TDELTA(name) gBxTimerDelta##name
 
-#define _BX_TIMER_INSERT(group, id, mark, interval)                 \
-
-
+/**
+ * Create a new timer group. Only one timer group should be in use at a time.
+ * @param name void The unique name of this timer group.
+ */
 #define BOX_TIMER_GROUP(name)                                       \
 float _BX_TDELTA(name);                                             \
 list _BX_TGRP(name);                                                \
@@ -152,12 +157,62 @@ integer _bxTimerStop##name(integer id, integer all)                 \
     return count != ocount;                                         \
 }
 
+/**
+ * Start a new reoccurring timer.
+ * @param group void Name of timer group created with BOX_TIMER_GROUP.
+ * @param id integer Identifier for this timer. Does not have to be unique.
+ * @param interval float How long, in seconds, should elapse between events.
+ */
 #define bxTimerStart(group, id, interval) _bxTimerStart##group(id, interval)
+
+/**
+ * Schedule a one-time event to occur after some delay.
+ * @param group void Name of the timer group created with BOX_TIMER_GROUP.
+ * @param id integer Identifier for this timer. Does not have to be unique.
+ * @param delay float How long, in seconds, before this event should occur.
+ * @param handle integer A key you can pass to bxTimerStopOnce to cancel a
+ *                       particular event among several with the same id.
+ */
 #define bxTimerOnce(group, id, delay, handle) _bxTimerOnce##group(id, delay, handle)
+
+/**
+ * Call from within a timer event. Returns a list of triggered timer events,
+ * rescheduling reoccurring ones.
+ *
+ * @param group void Name of the timer group created with BOX_TIMER_GROUP.
+ * @returns A list following the format [id, <interval or handle>, ...]
+ */
 #define bxTimerTick(group) _bxTimerTick##group()
 
+/**
+ * Stops the next event with the matching id. In the case of reoccurring events,
+ * will stop reoccurrences as well. If you have two timers (i.e. two calls to
+ * bxTimerStart) with the same id, only the next timer and its reoccurences will
+ * be cancelled.
+ * @param group void Name of the timer group created with BOX_TIMER_GROUP.
+ * @param id integer Identifier for a timer given to bxTimerStart or bxTimerOnce.
+ * @returns TRUE if a timer was stopped, FALSE otherwise.
+ */
 #define bxTimerStopNext(group, id) _bxTimerStop##group(id, FALSE)
+
+/**
+ * Stops the all timers with the matching id. In the case of reoccurring events,
+ * will stop reoccurrences as well. If you have two timers (i.e. two calls to
+ * bxTimerStart) with the same id, both timers and their reoccurences will
+ * be cancelled.
+ * @param group void Name of the timer group created with BOX_TIMER_GROUP.
+ * @param id integer Identifier for a timer given to bxTimerStart or bxTimerOnce.
+ * @returns TRUE if a timer was stopped, FALSE otherwise.
+ */
 #define bxTimerStopAll(group, id) _bxTimerStop##group(id, TRUE)
+
+/**
+ * Cancel an event created with bxTimerStartOnce.
+ * @param group void Name of the timer group created with BOX_TIMER_GROUP.
+ * @param id integer Identifier for a timer created with bxTimerStartOnce.
+ * @param handle integer A handle used to create a timer with bxTimerStartOnce.
+ * @returns TRUE if a timer was stopped, FALSE otherwise.
+ */
 #define bxTimerStopOnce(group, id, handle)  _bxTimerStopOnce##group(id, handle)
 
 #endif /* BOX_TIMER_CSL */
