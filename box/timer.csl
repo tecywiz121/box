@@ -1,0 +1,124 @@
+#ifndef BOX_TIMER_CSL
+#define BOX_TIMER_CSL 1
+
+/*
+ * TODO: Does not yet cope with time dilation. Not sure if that's important or
+ *       what. If you absolutely need accurate time, or maybe just understand
+ *       time dilation better, feel free to improve this, or remove this note as
+ *       appropriate.
+ */
+
+#include <box/memory.csl>
+
+#define _BX_TOKENPASTE(x, y) x ## y
+#define _BX_TOKENPASTE2(x, y) _BX_TOKENPASTE(x, y)
+#define _bxLbl _BX_TOKENPASTE2(__bxLbl, __LINE__)
+
+#define _BX_TGRP(name) gBxTimerGroup##name
+
+#define _BX_TGRP_STRIDE (3)
+#define _bxTgrpMark(n, idx)     (llList2Float(_BX_TGRP(n),    idx*_BX_TGRP_STRIDE))
+#define _bxTgrpId(n, idx)     (llList2Integer(_BX_TGRP(n), 1+(idx*_BX_TGRP_STRIDE)))
+#define _bxTgrpInterval(n, idx) (llList2Float(_BX_TGRP(n), 2+(idx*_BX_TGRP_STRIDE)))
+#define _bxTgrpHandle(n, idx) (llList2Integer(_BX_TGRP(n), 2+(idx*_BX_TGRP_STRIDE)))
+
+#define BOX_TIMER_TYPE_ONCE     TYPE_INTEGER
+#define BOX_TIMER_TYPE_INTERVAL TYPE_FLOAT
+#define _bxTgrpType(n, idx) (llGetListEntryType(_BX_TGRP(n), 2+(idx*_BX_TGRP_STRIDE)))
+
+#define bxTimerCount(name) (llGetListLength(_BX_TGRP(name)) / _BX_TGRP_STRIDE)
+
+#define _BX_TTIME(name) gBxTimerScriptTime##name
+
+#define _BX_TIMER_INSERT(group, id, mark, interval)                 \
+
+
+#define BOX_TIMER_GROUP(name)                                       \
+float _BX_TTIME(name);                                              \
+list _BX_TGRP(name);                                                \
+_bxTimerInsert##name(list parts)                                    \
+{                                                                   \
+    float mark = llList2Float(parts, 0);                            \
+    integer __bxII;                                                 \
+    for (__bxII = bxTimerCount(name) - 1; __bxII >= 0; __bxII--) {  \
+         if (_bxTgrpMark(name, __bxII) <= mark) {                   \
+            jump _bxLbl; }} @_bxLbl;                                \
+    __bxII += 1;                                                    \
+    _BX_TGRP(name) = llListInsertList(bxMove(_BX_TGRP(name)),       \
+                                       parts,                       \
+                                       __bxII*_BX_TGRP_STRIDE);     \
+    if (0 == __bxII) {                                              \
+        llSetTimerEvent(mark-llGetTime());                          \
+    }                                                               \
+}                                                                   \
+_bxTimerStart##name(integer id, float interval)                     \
+{                                                                   \
+    _bxTimerInsert##name([interval + llGetTime(), id, interval]);   \
+}                                                                   \
+_bxTimerOnce##name(integer id, float delay, integer handle)         \
+{                                                                   \
+    _bxTimerInsert##name([delay + llGetTime(), id, handle]);        \
+}                                                                   \
+list _bxTimerTick##name()                                           \
+{                                                                   \
+    float now = llGetAndResetTime();                                \
+    _BX_TTIME(name) += now;                                         \
+                                                                    \
+    list expired;                                                   \
+    integer ii;                                                     \
+    for (ii = bxTimerCount(name) - 1; ii >= 0; ii--) {              \
+        float mark = _bxTgrpMark(name, ii);                         \
+        mark -= now;                                                \
+        if (mark <= 0) {                                            \
+            expired += llList2List(_BX_TGRP(name),                  \
+                                   (ii*_BX_TGRP_STRIDE) + 1,        \
+                                   (ii*_BX_TGRP_STRIDE) + 2);       \
+        } else {                                                    \
+            _BX_TGRP(name) =                                        \
+                llListReplaceList(bxMove(_BX_TGRP(name)),           \
+                                  [mark],                           \
+                                  ii*_BX_TGRP_STRIDE,               \
+                                  ii*_BX_TGRP_STRIDE);              \
+        }                                                           \
+    }                                                               \
+                                                                    \
+    /* Remove expired timers from the list */                       \
+    integer n_expire = llGetListLength(expired)/2;                  \
+    if (0 < n_expire) {                                             \
+        _BX_TGRP(name) = llDeleteSubList(bxMove(_BX_TGRP(name)),    \
+                                         0,                         \
+                                         (n_expire*_BX_TGRP_STRIDE)-1);\
+                                                                    \
+        /* Re-add reoccurring timers */                             \
+        for (ii = n_expire - 1; ii >= 0; ii--) {                    \
+            integer type = llGetListEntryType(expired, (ii*2)+1);   \
+            if (type == BOX_TIMER_TYPE_INTERVAL) {                  \
+                float interval = llList2Float(expired, (ii*2)+1);   \
+                _bxTimerInsert##name([interval - llGetTime(),       \
+                                     llList2Integer(expired,(ii*2)),\
+                                     interval]);                    \
+            }                                                       \
+        }                                                           \
+    }                                                               \
+                                                                    \
+    /* Finally, stop the lsl timer if no pending events */          \
+    if (bxTimerCount(name) == 0) {                                  \
+        llSetTimerEvent(0.0);                                       \
+    } else if (0 == n_expire) {                                     \
+        llSetTimerEvent(_bxTgrpMark(name, 0));                      \
+    }                                                               \
+    return expired;                                                 \
+}
+
+#define bxTimerStart(group, id, interval) _bxTimerStart##group(id, interval)
+#define bxTimerOnce(group, id, delay, handle) _bxTimerOnce##group(id, delay, handle)
+#define bxTimerTick(group) _bxTimerTick##group()
+
+#define bxTimerStopNext(group, id)
+#define bxTimerStopAll(group, id)
+#define bxTimerStopOnce(group, id, handle)
+
+#define bxTimerScriptTime(group) (_BX_TTIME(group) + llGetTime())
+
+#endif /* BOX_TIMER_CSL */
+/* vim: set et sw=4 sts=4 ts=4: */
