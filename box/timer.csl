@@ -103,15 +103,62 @@ list _bxTimerTick##name()                                           \
         llSetTimerEvent(_BX_TDELTA(name));                          \
     }                                                               \
     return expired;                                                 \
+}                                                                   \
+integer _bxTimerStopOnce##name(integer id, integer handle)          \
+{                                                                   \
+    integer idx = llListFindList(_BX_TGRP(name), [id, handle])-1;   \
+    if (0 > idx) {                                                  \
+        return FALSE;                                               \
+    }                                                               \
+                                                                    \
+    _BX_TGRP(name) = llDeleteSubList(bxMove(_BX_TGRP(name)),        \
+                                      idx,                          \
+                                      idx+_BX_TGRP_STRIDE-1);       \
+                                                                    \
+    if (0 == idx) {                                                 \
+        integer count = bxTimerCount(name);                         \
+        if (count == 0) {                                           \
+            _BX_TDELTA(name) = 0.0;                                 \
+            llSetTimerEvent(0.0);                                   \
+        }                                                           \
+    }                                                               \
+    return TRUE;                                                    \
+}                                                                   \
+integer _bxTimerStop##name(integer id, integer all)                 \
+{                                                                   \
+    integer ii = 0;                                                 \
+    integer ocount = bxTimerCount(name);                            \
+    integer count = ocount;                                         \
+    for (ii = 0; ii < count; ii++) {                                \
+        if (_bxTgrpId(name, ii) == id) {                            \
+            _BX_TGRP(name) = llDeleteSubList(bxMove(_BX_TGRP(name)),\
+                                             ii*_BX_TGRP_STRIDE,    \
+                                             ((ii+1)*_BX_TGRP_STRIDE)-1);\
+            if (ii == 0) {                                          \
+                if (bxTimerCount(name) == 0) {                      \
+                    _BX_TDELTA(name) = 0.0;                         \
+                    llSetTimerEvent(0.0);                           \
+                }                                                   \
+            }                                                       \
+                                                                    \
+            if (!all) {                                             \
+                return TRUE;                                        \
+            }                                                       \
+                                                                    \
+            ii--;                                                   \
+            count--;                                                \
+        }                                                           \
+    }                                                               \
+    return count != ocount;                                         \
 }
 
 #define bxTimerStart(group, id, interval) _bxTimerStart##group(id, interval)
 #define bxTimerOnce(group, id, delay, handle) _bxTimerOnce##group(id, delay, handle)
 #define bxTimerTick(group) _bxTimerTick##group()
 
-#define bxTimerStopNext(group, id)
-#define bxTimerStopAll(group, id)
-#define bxTimerStopOnce(group, id, handle)
+#define bxTimerStopNext(group, id) _bxTimerStop##group(id, FALSE)
+#define bxTimerStopAll(group, id) _bxTimerStop##group(id, TRUE)
+#define bxTimerStopOnce(group, id, handle)  _bxTimerStopOnce##group(id, handle)
 
 #endif /* BOX_TIMER_CSL */
 /* vim: set et sw=4 sts=4 ts=4: */
