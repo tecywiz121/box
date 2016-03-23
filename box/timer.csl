@@ -54,9 +54,17 @@ _bxTimerStart##name(integer id, float interval)                     \
 {                                                                   \
     _bxTimerInsert##name([interval, id, interval]);                 \
 }                                                                   \
-_bxTimerOnce##name(integer id, float delay, integer handle)         \
+integer _bxTimerOnce##name(integer id, float delay)                 \
 {                                                                   \
-    _bxTimerInsert##name([delay, id, handle]);                      \
+    /* Generate a unique handle */                                  \
+    integer h;                                                      \
+    do {                                                            \
+        h = (integer)llFrand(65536)|((integer)llFrand(65536)<<16);  \
+        h = h | 0x80000000;                                         \
+    } while (llListFindList(_BX_TGRP(name), [h]) != -1);            \
+                                                                    \
+    _bxTimerInsert##name([delay, id, h]);                           \
+    return h;                                                       \
 }                                                                   \
 list _bxTimerTick##name()                                           \
 {                                                                   \
@@ -109,25 +117,27 @@ list _bxTimerTick##name()                                           \
     }                                                               \
     return expired;                                                 \
 }                                                                   \
-integer _bxTimerStopOnce##name(integer id, integer handle)          \
+integer _bxTimerStopOnce##name(integer handle)                      \
 {                                                                   \
-    integer idx = llListFindList(_BX_TGRP(name), [id, handle])-1;   \
-    if (0 > idx) {                                                  \
-        return FALSE;                                               \
-    }                                                               \
-                                                                    \
-    _BX_TGRP(name) = llDeleteSubList(bxMove(_BX_TGRP(name)),        \
-                                      idx,                          \
-                                      idx+_BX_TGRP_STRIDE-1);       \
-                                                                    \
-    if (0 == idx) {                                                 \
-        integer count = bxTimerCount(name);                         \
-        if (count == 0) {                                           \
-            _BX_TDELTA(name) = 0.0;                                 \
-            llSetTimerEvent(0.0);                                   \
+    integer ii;                                                     \
+    for (ii = bxTimerCount(name) - 1; ii >= 0; ii--) {              \
+        if (_bxTgrpType(name, ii) == BOX_TIMER_TYPE_ONCE) {         \
+            if (_bxTgrpHandle(name, ii) == handle) {                \
+                _BX_TGRP(name) =                                    \
+                    llDeleteSubList(bxMove(_BX_TGRP(name)),         \
+                                    ii,                             \
+                                    ii+_BX_TGRP_STRIDE-1);          \
+                if (0 == ii) {                                      \
+                    if (0 == bxTimerCount(name)) {                  \
+                        _BX_TDELTA(name) = 0.0;                     \
+                        llSetTimerEvent(0.0);                       \
+                    }                                               \
+                }                                                   \
+                return TRUE;                                        \
+            }                                                       \
         }                                                           \
     }                                                               \
-    return TRUE;                                                    \
+    return FALSE;                                                   \
 }                                                                   \
 integer _bxTimerStop##name(integer id, integer all)                 \
 {                                                                   \
@@ -170,10 +180,10 @@ integer _bxTimerStop##name(integer id, integer all)                 \
  * @param group void Name of the timer group created with BOX_TIMER_GROUP.
  * @param id integer Identifier for this timer. Does not have to be unique.
  * @param delay float How long, in seconds, before this event should occur.
- * @param handle integer A key you can pass to bxTimerStopOnce to cancel a
- *                       particular event among several with the same id.
+ * @returns A key you can pass to bxTimerStopOnce to cancel a particular
+ *          event.
  */
-#define bxTimerOnce(group, id, delay, handle) _bxTimerOnce##group(id, delay, handle)
+#define bxTimerOnce(group, id, delay) _bxTimerOnce##group(id, delay)
 
 /**
  * Call from within a timer event. Returns a list of triggered timer events,
@@ -209,11 +219,10 @@ integer _bxTimerStop##name(integer id, integer all)                 \
 /**
  * Cancel an event created with bxTimerStartOnce.
  * @param group void Name of the timer group created with BOX_TIMER_GROUP.
- * @param id integer Identifier for a timer created with bxTimerStartOnce.
  * @param handle integer A handle used to create a timer with bxTimerStartOnce.
  * @returns TRUE if a timer was stopped, FALSE otherwise.
  */
-#define bxTimerStopOnce(group, id, handle)  _bxTimerStopOnce##group(id, handle)
+#define bxTimerStopOnce(group, handle)  _bxTimerStopOnce##group(handle)
 
 #endif /* BOX_TIMER_CSL */
 /* vim: set et sw=4 sts=4 ts=4: */
