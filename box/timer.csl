@@ -123,6 +123,7 @@ integer _bxTimerStopOnce##name(integer handle)                      \
     for (ii = bxTimerCount(name) - 1; ii >= 0; ii--) {              \
         if (_bxTgrpType(name, ii) == BOX_TIMER_TYPE_ONCE) {         \
             if (_bxTgrpHandle(name, ii) == handle) {                \
+                integer id = _bxTgrpId(name, ii);                   \
                 _BX_TGRP(name) =                                    \
                     llDeleteSubList(bxMove(_BX_TGRP(name)),         \
                                     ii,                             \
@@ -133,11 +134,11 @@ integer _bxTimerStopOnce##name(integer handle)                      \
                         llSetTimerEvent(0.0);                       \
                     }                                               \
                 }                                                   \
-                return TRUE;                                        \
+                return id;                                          \
             }                                                       \
         }                                                           \
     }                                                               \
-    return FALSE;                                                   \
+    return 0;                                                       \
 }                                                                   \
 integer _bxTimerStop##name(integer id, integer all)                 \
 {                                                                   \
@@ -220,7 +221,8 @@ integer _bxTimerStop##name(integer id, integer all)                 \
  * Cancel an event created with bxTimerStartOnce.
  * @param group void Name of the timer group created with BOX_TIMER_GROUP.
  * @param handle integer A handle used to create a timer with bxTimerStartOnce.
- * @returns TRUE if a timer was stopped, FALSE otherwise.
+ * @returns The id of the timer that was stopped, or zero if no matching timer
+ *          was found.
  */
 #define bxTimerStopOnce(group, handle)  _bxTimerStopOnce##group(handle)
 
