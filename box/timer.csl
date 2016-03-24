@@ -226,5 +226,19 @@ integer _bxTimerStop##name(integer id, integer all)                 \
  */
 #define bxTimerStopOnce(group, handle)  _bxTimerStopOnce##group(handle)
 
+#define _BX_TEVI(name) __bxII##name
+#define _BX_TEVL(name) __bxEv##name
+#define BOX_TIMER_FOR_EACH(name)                                \
+integer _BX_TEVI(name);                                         \
+list _BX_TEVL(name) = bxTimerTick(name);                        \
+for (_BX_TEVI(name) = llGetListLength(_BX_TEVL(name)) - 2;      \
+     _BX_TEVI(name) >= 0;                                       \
+     _BX_TEVI(name)-=2)
+
+#define bxTimerEventId(name)        llList2Integer(_BX_TEVL(name), _BX_TEVI(name))
+#define bxTimerEventType(name)      llGetListEntryType(_BX_TEVL(name), _BX_TEVI(name)+1)
+#define bxTimerEventInterval(name)  llList2Float(_BX_TEVL(name), _BX_TEVI(name)+1)
+#define bxTimerEventHandle(name)    llList2Integer(_BX_TEVL(name), _BX_TEVI(name)+1)
+
 #endif /* BOX_TIMER_CSL */
 /* vim: set et sw=4 sts=4 ts=4: */
