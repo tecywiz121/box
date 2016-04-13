@@ -1,0 +1,326 @@
+#ifndef BOX_RLV_CSL
+#define BOX_RLV_CSL 1
+
+#include <box/async.csl>
+
+#define _BX_RLVQ(name) _bxRlvQueue##name
+
+#define BOX_RLV(name, tgrp) string _BX_RLVQ(name);                      \
+integer _bxRlvQ##name(integer type,                                     \
+                          float timeout,                                \
+                          string before,                                \
+                          string after)                                 \
+{                                                                       \
+    integer c = bxAsyncBegin(tgrp, 0x700|(type&0xFF), timeout, TRUE);   \
+    _BX_RLVQ(name) += "," + before + (string)c + after;                 \
+    return c;                                                           \
+}                                                                       \
+integer _bxRlvQ2##name(integer type,                                    \
+                       float timeout,                                   \
+                       string cmd,                                      \
+                       string arg)                                      \
+{                                                                       \
+    if ("" != arg) {                                                    \
+        cmd += ":" + arg;                                               \
+    }                                                                   \
+    return _bxRlvQ##name(type, timeout, cmd + "=", "");                 \
+}                                                                       \
+integer _bxRlvQ3##name(integer type,                                    \
+                       float timeout,                                   \
+                       string cmd,                                      \
+                       string arg,                                      \
+                       string arg2)                                     \
+{                                                                       \
+    if ("" != arg2) {                                                   \
+        arg += ";" + arg2;                                              \
+    }                                                                   \
+    return _bxRlvQ2##name(type, timeout, cmd, arg);                     \
+}                                                                       \
+_bxRlvQFlush##name()                                                    \
+{                                                                       \
+    llOwnerSay("@" + llDeleteSubString(_BX_RLVQ(name), 0, 0));          \
+    _BX_RLVQ(name) = "";                                                \
+}
+
+#define bxRlvQFlush(name) _bxRlvQFlush##name()
+
+#define BOX_RLV_REM "rem"
+#define BOX_RLV_ADD "add"
+#define BOX_RLV_ALLOW "y"
+#define BOX_RLV_DENY "n"
+
+//
+// Version Checking
+//
+#define BOX_RLV_VERSION_NEW     1
+#define BOX_RLV_VERSION_NUM     2
+#define BOX_RLV_VERSION_NUM_BL  3
+
+#define bxRlvVersionNum(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NUM,       \
+                                                     (timeout),                 \
+                                                     "versionnum=",             \
+                                                     "")
+
+#define bxRlvVersionNumBl(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NUM_BL,  \
+                                                       (timeout),               \
+                                                       "versionnumbl=",         \
+                                                       "")
+
+#define bxRlvVersionNew(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NEW,       \
+                                                     (timeout),                 \
+                                                     "versionnew=",             \
+                                                     "")
+
+//
+// Blacklist
+//
+#define BOX_RLV_GET_BLACKLIST   10
+
+#define bxRlvGetBlacklist(name, timeout, filter)                        \
+    _bxRlvQ2##name(BOX_RLV_GET_BLACKLIST,                               \
+                   (timeout),                                           \
+                   "getblacklist",                                      \
+                   filter)
+
+//
+// Miscellaneous
+//
+#define BOX_RLV_NOTIFY          20
+#define BOX_RLV_PERMISSIVE      21
+#define BOX_RLV_CLEAR           22
+#define BOX_RLV_GET_STATUS      23
+#define BOX_RLV_GET_STATUS_ALL  24
+
+#define bxRlvNotify(name, channel, needle, mode)                        \
+do {                                                                    \
+    _BX_RLVQ(name) += ",notify:" + (string)channel;                     \
+    string __bxRlvNeedle = (needle);                                    \
+    if ("" != __bxRlvNeedle) {                                          \
+        _BX_RLVQ(name) += ";" + __bxRlvNeedle;                          \
+    }                                                                   \
+    _BX_RLVQ(name) += "=" + (mode);                                     \
+} while (0)
+
+#define bxRlvPermissive(name, mode)                                     \
+    do { _BX_RLVQ(name) += ",permissive=" + mode; } while (0)
+
+#define bxRlvClear(name, needle)                                        \
+do {                                                                    \
+    _BX_RLVQ(name) += ",clear";                                         \
+    string __bxRlvNeedle = (needle);                                    \
+    if ("" != __bxRlvNeedle) {                                          \
+        _BX_RLVQ(name) += "=" + __bxRlvNeedle;                          \
+    }                                                                   \
+} while (0)
+
+#define bxRlvGetStatus(name, timeout, needle, sep)                      \
+    _bxRlvQ3##name(BOX_RLV_GET_STATUS,                                  \
+                   (timeout),                                           \
+                   (needle),                                            \
+                   (sep))
+
+#define bxRlvGetStatusAll(name, timeout, needle, sep)                   \
+    _bxRlvQ3##name(BOX_RLV_GET_STATUS_ALL,                              \
+                   (timeout),                                           \
+                   (needle),                                            \
+                   (sep))
+
+//
+// Movement
+//
+#define BOX_RLV_FLY             30
+#define BOX_RLV_TEMP_RUN        31
+#define BOX_RLV_ALWAYS_RUN      32
+#define BOX_RLV_SET_ROT         33
+#define BOX_RLV_ADJUST_HEIGHT   34
+
+#define bxRlvFly(name, mode)                                            \
+do {                                                                    \
+    _BX_RLVQ(name) += ",fly=" + mode;                                   \
+} while(0)
+
+#define bxRlvTempRun(name, mode)                                        \
+do {                                                                    \
+    _BX_RLVQ(name) += ",temprun=" + mode;                               \
+} while (0)
+
+#define bxRlvSetRot(name, radians)                                      \
+do {                                                                    \
+    _BX_RLVQ(name) += ",setrot:" + (string)radians + "=force";          \
+} while (0)
+
+#define bxRlvAdjustHeight(name, pfd, factor, delta)                     \
+do {                                                                    \
+    _BX_RLVQ(name) += ",adjustheight:"                                  \
+                      + (string)(pfd) + ";"                             \
+                      + (string)(factor);                               \
+    float __bxDelta = (delta);                                          \
+    if (0.0 != __bxDelta) {                                             \
+        _BX_RLVQ(name) += ";" + (string)__bxDelta;                      \
+    }                                                                   \
+} while (0)
+
+//
+// Camera & Zoom
+//
+#define BOX_RLV_CAM_ZOOM_MAX        40
+#define BOX_RLV_CAM_ZOOM_MIN        41
+#define BOX_RLV_CAM_DIST_MAX        42
+#define BOX_RLV_CAM_DIST_MIN        43
+#define BOX_RLV_CAM_DRAW_MIN        44
+#define BOX_RLV_CAM_DRAW_MAX        45
+#define BOX_RLV_CAM_DRAW_ALPHA_MIN  46
+#define BOX_RLV_CAM_DRAW_ALPHA_MAX  47
+#define BOX_RLV_CAM_DRAW_COLOR      48
+#define BOX_RLV_CAM_UNLOCK          49
+#define BOX_RLV_CAM_AV_DIST         50
+#define BOX_RLV_CAM_TEXTURES        51
+
+#define bxRlvCamZoomMax(name, max_multiplier, mode)                     \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camzoommax:"                                    \
+                      + (string)(max_multiplier) + "=" + mode;          \
+} while (0)
+
+//
+// Chat, emotes, and Instant Messages
+//
+#define BOX_RLV_SEND_CHAT           70
+#define BOX_RLV_CHAT_SHOUT          71
+#define BOX_RLV_CHAT_NORMAL         72
+#define BOX_RLV_CHAT_WHISPER        73
+#define BOX_RLV_REDIR_CHAT          74
+#define BOX_RLV_RECV_CHAT           75
+#define BOX_RLV_RECV_CHAT_SEC       76
+#define BOX_RLV_RECV_CHAT_FROM      77
+#define BOX_RLV_EMOTE               78
+#define BOX_RLV_REDIR_EMOTE         79
+#define BOX_RLV_RECV_EMOTE          80
+#define BOX_RLV_RECV_EMOTE_FROM     81
+#define BOX_RLV_RECV_EMOTE_SEC      82
+#define BOX_RLV_SEND_CHANNEL        83
+#define BOX_RLV_SEND_CHANNEL_SEC    84
+#define BOX_RLV_SEND_IM             85
+#define BOX_RLV_SEND_IM_SEC         86
+#define BOX_RLV_SEND_IM_TO          87
+#define BOX_RLV_START_IM            88
+#define BOX_RLV_START_IM_TO         89
+#define BOX_RLV_RECV_IM             90
+#define BOX_RLV_RECV_IM_SEC         91
+#define BOX_RLV_RECV_IM_FROM        92
+
+//
+// Teleportation
+//
+#define BOX_RLV_TP_LM               100
+#define BOX_RLV_TP_LOC              101
+#define BOX_RLV_TP_LURE             102
+#define BOX_RLV_TP_LURE_SEC         103
+#define BOX_RLV_SIT_TP              104
+#define BOX_RLV_STAND_TP            105
+#define BOX_RLV_TP_TO               106
+#define BOX_RLV_ACCEPT_TP           107
+
+//
+// Inventory, Editing, Rezzing
+//
+#define BOX_RLV_SHOW_INV            110
+#define BOX_RLV_VIEW_NOTE           111
+#define BOX_RLV_VIEW_SCRIPT         112
+#define BOX_RLV_VIEW_TEXTURE        113
+#define BOX_RLV_EDIT                114
+#define BOX_RLV_REZ                 115
+#define BOX_RLV_EDIT_OBJ            116
+
+//
+// Sitting
+//
+#define BOX_RLV_SIT                 120
+#define BOX_RLV_UNSIT               121
+#define BOX_RLV_GET_SIT_ID          122
+
+//
+// Clothing & Attachments
+//
+#define BOX_RLV_DETACH              130
+#define BOX_RLV_ADD_ATTACH          131
+#define BOX_RLV_REM_ATTACH          132
+#define BOX_RLV_GET_ATTACH          133
+#define BOX_RLV_DEFAULT_WEAR        134
+#define BOX_RLV_ADD_OUTFIT          135
+#define BOX_RLV_REM_OUTFIT          136
+#define BOX_RLV_GET_OUTFIT          137
+#define BOX_RLV_ACCEPT_PERMISSION   138
+#define BOX_RLV_DETACH_ME           139
+
+//
+// Clothing & Attachments (Shared Folders)
+//
+#define BOX_RLV_UNSHARED_WEAR               150
+#define BOX_RLV_UNSHARED_UNWEAR             151
+#define BOX_RLV_GET_INV                     152
+#define BOX_RLV_GET_INV_WORN                153
+#define BOX_RLV_FIND_FOLDER                 154
+#define BOX_RLV_ATTACH                      155
+#define BOX_RLV_ATTACH_OVER                 156
+#define BOX_RLV_ATTACH_OVER_OR_REPLACE      157
+#define BOX_RLV_ATTACH_ALL                  158
+#define BOX_RLV_ATTACH_ALL_OVER             159
+#define BOX_RLV_ATTACH_ALL_OVER_OR_REPLACE  160
+#define BOX_RLV_DETACH_ALL                  161
+#define BOX_RLV_GET_PATH                    162
+#define BOX_RLV_GET_PATH_NEW                163
+#define BOX_RLV_ATTACH_THIS                 164
+#define BOX_RLV_ATTACH_THIS_OVER            165
+#define BOX_RLV_ATTACH_THIS_OVER_OR_REPLACE 166
+#define BOX_RLV_DETACH_THIS                 167
+#define BOX_RLV_DETACH_ALL_THIS             168
+#define BOX_RLV_DETACH_THIS_EXCEPT          169
+#define BOX_RLV_DETACH_ALL_THIS_EXCEPT      170
+#define BOX_RLV_ATTACH_THIS_EXCEPT          171
+#define BOX_RLV_ATTACH_ALL_THIS_EXCEPT      172
+
+//
+// Touch
+//
+#define BOX_RLV_TOUCH_FAR           180
+#define BOX_RLV_TOUCH_ALL           181
+#define BOX_RLV_TOUCH_WORLD         182
+#define BOX_RLV_TOUCH_THIS          183
+#define BOX_RLV_TOUCH_ME            184
+#define BOX_RLV_TOUCH_ATTACH        185
+#define BOX_RLV_TOUCH_ATTACH_SELF   186
+#define BOX_RLV_TOUCH_ATTACH_OTHER  187
+
+//
+// Location
+//
+#define BOX_RLV_SHOW_WORLD_MAP      190
+#define BOX_RLV_SHOW_MINI_MAP       191
+#define BOX_RLV_SHOW_LOC            192
+
+//
+// Name Tags & Hovertext
+//
+#define BOX_RLV_SHOW_NAMES              200
+#define BOX_RLV_SHOW_HOVERTEXT_ALL      201
+#define BOX_RLV_SHOW_HOVERTEXT          202
+#define BOX_RLV_SHOW_HOVERTEXT_HUD      203
+#define BOX_RLV_SHOW_HOVERTEXT_WORLD    204
+
+//
+// Group
+//
+#define BOX_RLV_SET_GROUP   210
+#define BOX_RLV_GET_GROUP   211
+
+//
+// Viewer Control
+//
+#define BOX_RLV_SET_DEBUG   220
+#define BOX_RLV_GET_DEBUG   221
+#define BOX_RLV_SET_ENV     222
+#define BOX_RLV_GET_ENV     223
+
+#endif /* BOX_RLV_CSL */
+/* vim: set et sw=4 sts=4 ts=4: */
