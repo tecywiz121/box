@@ -36,13 +36,13 @@ integer _bxRlvQ3##name(integer type,                                    \
     }                                                                   \
     return _bxRlvQ2##name(type, timeout, cmd, arg);                     \
 }                                                                       \
-_bxRlvQFlush##name()                                                    \
+_bxRlvFlush##name()                                                     \
 {                                                                       \
     llOwnerSay("@" + llDeleteSubString(_BX_RLVQ(name), 0, 0));          \
     _BX_RLVQ(name) = "";                                                \
 }
 
-#define bxRlvQFlush(name) _bxRlvQFlush##name()
+#define bxRlvFlush(name) _bxRlvFlush##name()
 
 #define BOX_RLV_REM "rem"
 #define BOX_RLV_ADD "add"
@@ -56,17 +56,17 @@ _bxRlvQFlush##name()                                                    \
 #define BOX_RLV_VERSION_NUM     2
 #define BOX_RLV_VERSION_NUM_BL  3
 
-#define bxRlvVersionNum(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NUM,       \
+#define bxRlvBeginVersionNum(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NUM,  \
                                                      (timeout),                 \
                                                      "versionnum=",             \
                                                      "")
 
-#define bxRlvVersionNumBl(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NUM_BL,  \
-                                                       (timeout),               \
-                                                       "versionnumbl=",         \
+#define bxRlvBeginVersionNumBl(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NUM_BL, \
+                                                       (timeout),                   \
+                                                       "versionnumbl=",             \
                                                        "")
 
-#define bxRlvVersionNew(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NEW,       \
+#define bxRlvBeginVersionNew(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NEW,  \
                                                      (timeout),                 \
                                                      "versionnew=",             \
                                                      "")
@@ -76,7 +76,7 @@ _bxRlvQFlush##name()                                                    \
 //
 #define BOX_RLV_GET_BLACKLIST   10
 
-#define bxRlvGetBlacklist(name, timeout, filter)                        \
+#define bxRlvBeginGetBlacklist(name, timeout, filter)                   \
     _bxRlvQ2##name(BOX_RLV_GET_BLACKLIST,                               \
                    (timeout),                                           \
                    "getblacklist",                                      \
@@ -91,7 +91,7 @@ _bxRlvQFlush##name()                                                    \
 #define BOX_RLV_GET_STATUS      23
 #define BOX_RLV_GET_STATUS_ALL  24
 
-#define bxRlvNotify(name, channel, needle, mode)                        \
+#define bxRlvDoNotify(name, channel, needle, mode)                      \
 do {                                                                    \
     _BX_RLVQ(name) += ",notify:" + (string)channel;                     \
     string __bxRlvNeedle = (needle);                                    \
@@ -101,10 +101,10 @@ do {                                                                    \
     _BX_RLVQ(name) += "=" + (mode);                                     \
 } while (0)
 
-#define bxRlvPermissive(name, mode)                                     \
+#define bxRlvDoPermissive(name, mode)                                   \
     do { _BX_RLVQ(name) += ",permissive=" + mode; } while (0)
 
-#define bxRlvClear(name, needle)                                        \
+#define bxRlvDoClear(name, needle)                                      \
 do {                                                                    \
     _BX_RLVQ(name) += ",clear";                                         \
     string __bxRlvNeedle = (needle);                                    \
@@ -113,13 +113,13 @@ do {                                                                    \
     }                                                                   \
 } while (0)
 
-#define bxRlvGetStatus(name, timeout, needle, sep)                      \
+#define bxRlvBeginGetStatus(name, timeout, needle, sep)                 \
     _bxRlvQ3##name(BOX_RLV_GET_STATUS,                                  \
                    (timeout),                                           \
                    (needle),                                            \
                    (sep))
 
-#define bxRlvGetStatusAll(name, timeout, needle, sep)                   \
+#define bxRlvBeginGetStatusAll(name, timeout, needle, sep)              \
     _bxRlvQ3##name(BOX_RLV_GET_STATUS_ALL,                              \
                    (timeout),                                           \
                    (needle),                                            \
@@ -134,22 +134,22 @@ do {                                                                    \
 #define BOX_RLV_SET_ROT         33
 #define BOX_RLV_ADJUST_HEIGHT   34
 
-#define bxRlvFly(name, mode)                                            \
+#define bxRlvDoFly(name, mode)                                          \
 do {                                                                    \
     _BX_RLVQ(name) += ",fly=" + mode;                                   \
 } while(0)
 
-#define bxRlvTempRun(name, mode)                                        \
+#define bxRlvDoTempRun(name, mode)                                      \
 do {                                                                    \
     _BX_RLVQ(name) += ",temprun=" + mode;                               \
 } while (0)
 
-#define bxRlvSetRot(name, radians)                                      \
+#define bxRlvDoSetRot(name, radians)                                    \
 do {                                                                    \
     _BX_RLVQ(name) += ",setrot:" + (string)radians + "=force";          \
 } while (0)
 
-#define bxRlvAdjustHeight(name, pfd, factor, delta)                     \
+#define bxRlvDoAdjustHeight(name, pfd, factor, delta)                   \
 do {                                                                    \
     _BX_RLVQ(name) += ",adjustheight:"                                  \
                       + (string)(pfd) + ";"                             \
@@ -176,7 +176,7 @@ do {                                                                    \
 #define BOX_RLV_CAM_AV_DIST         50
 #define BOX_RLV_CAM_TEXTURES        51
 
-#define bxRlvCamZoomMax(name, max_multiplier, mode)                     \
+#define bxRlvDoCamZoomMax(name, max_multiplier, mode)                   \
 do {                                                                    \
     _BX_RLVQ(name) += ",camzoommax:"                                    \
                       + (string)(max_multiplier) + "=" + mode;          \
