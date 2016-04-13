@@ -29,7 +29,7 @@ integer _bxAsyncBegin##tgrp(integer type, float timeout, integer owner_only)\
 }                                                                           \
 list _bxAsyncFinish##tgrp(integer channel, key sender)                      \
 {                                                                           \
-    integer id = _bxTimerStopOnce(tgrp, channel);                           \
+    integer id = bxTimerStopOnce(tgrp, channel);                            \
     if (0 == id) {                                                          \
         return [];                                                          \
     }                                                                       \
