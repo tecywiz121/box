@@ -59,7 +59,7 @@ integer _bxTimerOnce##name(integer id, float delay)                 \
     /* Generate a unique handle */                                  \
     integer h;                                                      \
     do {                                                            \
-        h = 1+(integer)llFrand(65535)|((integer)llFrand(65536)<<16);\
+        h = 1+(integer)llFrand(65535)|((integer)llFrand(32767)<<16);\
     } while (llListFindList(_BX_TGRP(name), [h]) != -1);            \
                                                                     \
     _bxTimerInsert##name([delay, id, h]);                           \
