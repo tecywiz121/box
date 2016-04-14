@@ -246,6 +246,7 @@ do {                                                                    \
 do {                                                                    \
     _BX_RLVQ(name) += ",camtextures=" + mode;                           \
 } while (0)
+
 //
 // Chat, emotes, and Instant Messages
 //
@@ -272,6 +273,145 @@ do {                                                                    \
 #define BOX_RLV_RECV_IM             90
 #define BOX_RLV_RECV_IM_SEC         91
 #define BOX_RLV_RECV_IM_FROM        92
+
+#define bxRlvDoSendChat(name, mode)                                     \
+do {                                                                    \
+    _BX_RLVQ(name) += ",sendchat=" + mode;                              \
+} while (0)
+
+#define bxRlvDoChatShout(name, mode)                                    \
+do {                                                                    \
+    _BX_RLVQ(name) += ",chatshout=" + mode;                             \
+} while (0)
+
+#define bxRlvDoChatNormal(name, mode)                                   \
+do {                                                                    \
+    _BX_RLVQ(name) += ",chatnormal=" + mode;                            \
+} while (0)
+
+#define bxRlvDoChatWhisper(name, mode)                                  \
+do {                                                                    \
+    _BX_RLVQ(name) += ",chatwhisper=" + mode;                           \
+} while (0)
+
+#define bxRlvDoRedirChat(name, channel, mode)                           \
+do {                                                                    \
+    _BX_RLVQ(name) += ",redirchat:" + (string)(channel) + "=" + mode;   \
+} while (0)
+
+#define bxRlvDoRecvChat(name, uuid, mode)                               \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += ",recvchat" + uuid + "=" + mode;                  \
+} while (0)
+
+#define bxRlvDoRecvChatSec(name, mode)                                  \
+do {                                                                    \
+    _BX_RLVQ(name) += ",recvchat_sec=" + mode;                          \
+} while (0)
+
+#define bxRlvDoRecvChatFrom(name, uuid, mode)                           \
+do {                                                                    \
+    _BX_RLVQ(name) += ",recvchatfrom:" + (string)(uuid) + "=" + mode;   \
+} while (0)
+
+#define bxRlvDoEmote(name, mode)                                        \
+do {                                                                    \
+    _BX_RLVQ(name) += ",emote=" + mode;                                 \
+} while (0)
+
+#define bxRlvDoRedirEmote(name, channel, mode)                          \
+do {                                                                    \
+    _BX_RLVQ(name) += ",rediremote:" + (string)(channel) + "=" + mode;  \
+} while (0)
+
+#define bxRlvDoRecvEmote(name, mode)                                    \
+do {                                                                    \
+    _BX_RLVQ(name) += ",recvemote=" + mode;                             \
+} while (0)
+
+#define bxRlvDoRecvEmoteSec(name, mode)                                 \
+do {                                                                    \
+    _BX_RLVQ(name) += ",recvemote_sec=" + mode;                         \
+} while (0)
+
+#define bxRlvDoRecvEmoteFrom(name, uuid, mode)                          \
+do {                                                                    \
+    _BX_RLVQ(name) += ",recvemotefrom:" + (string)(uuid) + "=" + mode;  \
+} while (0)
+
+#define bxRlvDoSendChannel(name, channel, mode)                         \
+do {                                                                    \
+    string __bxC = (string)(channel);                                   \
+    if ("" != __bxC) {                                                  \
+        __bxC = ":" + __bxC;                                            \
+    }                                                                   \
+    _BX_RLVQ(name) += ",sendchannel" + __bxC + "=" + mode;              \
+} while (0)
+
+#define bxRlvDoSendChannelSec(name, channel, mode)                      \
+do {                                                                    \
+    string __bxC = (string)(channel);                                   \
+    if ("" != __bxC) {                                                  \
+        __bxC = ":" + __bxC;                                            \
+    }                                                                   \
+    _BX_RLVQ(name) += ",sendchannel_sec" + __bxC + "=" + mode;          \
+} while (0)
+
+#define bxRlvDoSendIm(name, uuid, mode)                                 \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += ",sendim" + __bxUuid + "=" mode;                  \
+} while (0)
+
+#define bxRlvDoSendImSec(name, mode)                                    \
+do {                                                                    \
+    _BX_RLVQ(name) += ",sendim_sec=" + mode;                            \
+} while (0)
+
+#define bxRlvDoSendImTo(name, uuid, mode)                               \
+do {                                                                    \
+    _BX_RLVQ(name) += ",sendimto:" + (string)(uuid) + "=" + mode;       \
+} while (0)
+
+#define bxRlvDoStartIm(name, uuid, mode)                                \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += ",startim" + __bxUuid + "=" mode;                 \
+} while (0)
+
+#define bxRlvDoStartImTo(name, uuid, mode)                              \
+do {                                                                    \
+    _BX_RLVQ(name) += ",startimto:" + (string)(uuid) + "=" + mode;      \
+} while (0)
+
+#define bxRlvDoRecvIm(name, uuid, mode)                                 \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += ",recvim" + __bxUuid + "=" mode;                  \
+} while (0)
+
+#define bxRlvDoRecvImSec(name, mode)                                    \
+do {                                                                    \
+    _BX_RLVQ(name) += ",recvim_sec=" + mode;                            \
+} while (0)
+
+#define bxRlvDoRecvImFrom(name, uuid, mode)                             \
+do {                                                                    \
+    _BX_RLVQ(name) += ",recvimfrom:" + (string)(uuid) + "=" + mode;     \
+} while (0)
 
 //
 // Teleportation
