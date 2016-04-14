@@ -182,6 +182,70 @@ do {                                                                    \
                       + (string)(max_multiplier) + "=" + mode;          \
 } while (0)
 
+#define bxRlvDoCamZoomMin(name, min_multiplier, mode)                   \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camzoommin:"                                    \
+                      + (string)(min_multiplier) + "=" + mode;          \
+} while (0)
+
+#define bxRlvDoCamDistMax(name, max_distance, mode)                     \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camdistmax:"                                    \
+                      + (string)(max_distance) + "=" + mode;            \
+} while (0)
+
+#define bxRlvDoCamDistMin(name, min_distance, mode)                     \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camdistmin:"                                    \
+                      + (string)(min_distance) + "=" + mode;            \
+} while (0)
+
+#define bxRlvDoCamDrawMax(name, max_distance, mode)                     \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camdrawmax:"                                    \
+                      + (string)(max_distance) + "=" + mode;            \
+} while (0)
+
+#define bxRlvDoCamDrawMin(name, min_distance, mode)                     \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camdrawmin:"                                    \
+                      + (string)(min_distance) + "=" + mode;            \
+} while (0)
+
+#define bxRlvDoCamDrawAlphaMax(name, max_alpha, mode)                   \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camdrawalphamax:"                               \
+                      + (string)(max_alpha) + "=" + mode;               \
+} while (0)
+
+#define bxRlvDoCamDrawAlphaMin(name, min_alpha, mode)                   \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camdrawalphamin:"                               \
+                      + (string)(min_alpha) + "=" + mode;               \
+} while (0)
+
+#define bxRlvDoCamDrawColor(name, red, green, blue, mode)               \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camdrawcolor:"                                  \
+                      + (string)(red)                                   \
+                      + ";" + (string)(green)                           \
+                      + ";" + (string)(blue) + "=" + mode;              \
+} while (0)
+
+#define bxRlvDoCamUnlock(name, mode)                                    \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camunlock=" + mode;                             \
+} while (0)
+
+#define bxRlvDoCamAvDist(name, distance, mode)                          \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camavdist:" + (string)(distance) + "=" + mode;  \
+} while (0)
+
+#define bxRlvDoCamTextures(name, mode)                                  \
+do {                                                                    \
+    _BX_RLVQ(name) += ",camtextures=" + mode;                           \
+} while (0)
 //
 // Chat, emotes, and Instant Messages
 //
