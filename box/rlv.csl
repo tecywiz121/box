@@ -425,6 +425,39 @@ do {                                                                    \
 #define BOX_RLV_TP_TO               106
 #define BOX_RLV_ACCEPT_TP           107
 
+#define bxRlvDoTpLm(name, mode) do { _BX_RLVQ(name) += ",tplm=" + mode; } while (0)
+#define bxRlvDoTpLoc(name, mode) do { _BX_RLVQ(name) += ",tploc=" + mode; } while (0)
+
+#define bxRlvDoTpLure(name, uuid, mode)                                 \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += ",tplure" + __bxUuid + "=" + mode;                \
+} while (0)
+
+#define bxRlvDoTpLureSec(name, mode) do { _BX_RLVQ(name) += ",tplure_sec=" + mode; } while (0)
+#define bxRlvDoSitTp(name, mode) do { _BX_RLVQ(name) += ",sittp=" + mode; } while (0)
+#define bxRlvDoStandTp(name, mode) do { _BX_RLVQ(name) += ",standtp=" + mode; } while (0)
+
+#define bxRlvDoTpTo(name, x, y, z)                                      \
+do {                                                                    \
+    _BX_RLVQ(name) += ",tpto:" + (string)(x)                            \
+                               + "/" + (string)(y)                      \
+                               + "/" + (string)(z)                      \
+                               + "=force";                              \
+} while (0)
+
+#define bxRlvDoAcceptTp(name, uuid, mode)                               \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += ",accepttp" + __bxUuid + "=" + mode;              \
+} while (0)
+
 //
 // Inventory, Editing, Rezzing
 //
