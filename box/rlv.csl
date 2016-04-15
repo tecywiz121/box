@@ -469,6 +469,27 @@ do {                                                                    \
 #define BOX_RLV_REZ                 115
 #define BOX_RLV_EDIT_OBJ            116
 
+#define bxRlvDoShowInv(name, mode) do { _BX_RLVQ(name) += ",showinv=" + mode; } while (0)
+#define bxRlvDoViewNote(name, mode) do { _BX_RLVQ(name) += ",viewnote=" + mode; } while (0)
+#define bxRlvDoViewScript(name, mode) do { _BX_RLVQ(name) += ",viewscript=" + mode; } while (0)
+#define bxRlvDoViewTexture(name, mode) do { _BX_RLVQ(name) += ",viewtexture=" + mode; } while (0)
+
+#define bxRlvDoEdit(name, uuid, mode)                                   \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += ",edit" + __bxUuid + "=" + mode;                  \
+} while (0)
+
+#define bxRlvDoRez(name, mode) do { _BX_RLVQ(name) += ",rez=" + mode; } while (0)
+
+#define bxRlvDoEditObj(name, uuid, mode)                                \
+do {                                                                    \
+    _BX_RLVQ(name) += ",editobj:" + (string)(uuid) + "=" + mode;        \
+} while (0)
+
 //
 // Sitting
 //
