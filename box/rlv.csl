@@ -44,6 +44,21 @@ _bxRlvFlush##name()                                                     \
 
 #define bxRlvFlush(name) _bxRlvFlush##name()
 
+#define _bxRlvDoKey(cmd, name, uuid, mode)                              \
+do {                                                                    \
+    string __bxUuid = (string)(uuid);                                   \
+    if ("" != __bxUuid) {                                               \
+        __bxUuid = ":" + __bxUuid;                                      \
+    }                                                                   \
+    _BX_RLVQ(name) += cmd + __bxUuid + "=" + mode;                      \
+} while (0)
+
+#define _bxRlvDo1(cmd, name, mode)                                      \
+do {                                                                    \
+    _BX_RLVQ(name) += cmd + mode;                                       \
+} while (0)
+
+
 #define BOX_RLV_REM "rem"
 #define BOX_RLV_ADD "add"
 #define BOX_RLV_ALLOW "y"
@@ -101,8 +116,7 @@ do {                                                                    \
     _BX_RLVQ(name) += "=" + (mode);                                     \
 } while (0)
 
-#define bxRlvDoPermissive(name, mode)                                   \
-    do { _BX_RLVQ(name) += ",permissive=" + mode; } while (0)
+#define bxRlvDoPermissive(name, mode) _bxRlvDo1(",permissive=", name, mode)
 
 #define bxRlvDoClear(name, needle)                                      \
 do {                                                                    \
@@ -134,15 +148,8 @@ do {                                                                    \
 #define BOX_RLV_SET_ROT         33
 #define BOX_RLV_ADJUST_HEIGHT   34
 
-#define bxRlvDoFly(name, mode)                                          \
-do {                                                                    \
-    _BX_RLVQ(name) += ",fly=" + mode;                                   \
-} while(0)
-
-#define bxRlvDoTempRun(name, mode)                                      \
-do {                                                                    \
-    _BX_RLVQ(name) += ",temprun=" + mode;                               \
-} while (0)
+#define bxRlvDoFly(name, mode) _bxRlvDo1(",fly=", name, mode)
+#define bxRlvDoTempRun(name, mode) _bxRlvDo1(",temprun=", name, mode)
 
 #define bxRlvDoSetRot(name, radians)                                    \
 do {                                                                    \
@@ -232,20 +239,14 @@ do {                                                                    \
                       + ";" + (string)(blue) + "=" + mode;              \
 } while (0)
 
-#define bxRlvDoCamUnlock(name, mode)                                    \
-do {                                                                    \
-    _BX_RLVQ(name) += ",camunlock=" + mode;                             \
-} while (0)
+#define bxRlvDoCamUnlock(name, mode) _bxRlvDo1(",camunlock=", name, mode)
 
 #define bxRlvDoCamAvDist(name, distance, mode)                          \
 do {                                                                    \
     _BX_RLVQ(name) += ",camavdist:" + (string)(distance) + "=" + mode;  \
 } while (0)
 
-#define bxRlvDoCamTextures(name, mode)                                  \
-do {                                                                    \
-    _BX_RLVQ(name) += ",camtextures=" + mode;                           \
-} while (0)
+#define bxRlvDoCamTextures(name, mode) _bxRlvDo1(",camtextures=", name, mode)
 
 //
 // Chat, emotes, and Instant Messages
@@ -274,69 +275,34 @@ do {                                                                    \
 #define BOX_RLV_RECV_IM_SEC         91
 #define BOX_RLV_RECV_IM_FROM        92
 
-#define bxRlvDoSendChat(name, mode)                                     \
-do {                                                                    \
-    _BX_RLVQ(name) += ",sendchat=" + mode;                              \
-} while (0)
-
-#define bxRlvDoChatShout(name, mode)                                    \
-do {                                                                    \
-    _BX_RLVQ(name) += ",chatshout=" + mode;                             \
-} while (0)
-
-#define bxRlvDoChatNormal(name, mode)                                   \
-do {                                                                    \
-    _BX_RLVQ(name) += ",chatnormal=" + mode;                            \
-} while (0)
-
-#define bxRlvDoChatWhisper(name, mode)                                  \
-do {                                                                    \
-    _BX_RLVQ(name) += ",chatwhisper=" + mode;                           \
-} while (0)
+#define bxRlvDoSendChat(name, mode) _bxRlvDo1(",sendchat=", name, mode)
+#define bxRlvDoChatShout(name, mode) _bxRlvDo1(",chatshout=", name, mode)
+#define bxRlvDoChatNormal(name, mode) _bxRlvDo1(",chatnormal=", name, mode)
+#define bxRlvDoChatWhisper(name, mode) _bxRlvDo1(",chatwhisper=", name, mode)
 
 #define bxRlvDoRedirChat(name, channel, mode)                           \
 do {                                                                    \
     _BX_RLVQ(name) += ",redirchat:" + (string)(channel) + "=" + mode;   \
 } while (0)
 
-#define bxRlvDoRecvChat(name, uuid, mode)                               \
-do {                                                                    \
-    string __bxUuid = (string)(uuid);                                   \
-    if ("" != __bxUuid) {                                               \
-        __bxUuid = ":" + __bxUuid;                                      \
-    }                                                                   \
-    _BX_RLVQ(name) += ",recvchat" + uuid + "=" + mode;                  \
-} while (0)
+#define bxRlvDoRecvChat(name, uuid, mode) _bxRlvDoKey(",recvchat", name, uuid, mode)
 
-#define bxRlvDoRecvChatSec(name, mode)                                  \
-do {                                                                    \
-    _BX_RLVQ(name) += ",recvchat_sec=" + mode;                          \
-} while (0)
+#define bxRlvDoRecvChatSec(name, mode) _bxRlvDo1(",recvchat_sec=", name, mode)
 
 #define bxRlvDoRecvChatFrom(name, uuid, mode)                           \
 do {                                                                    \
     _BX_RLVQ(name) += ",recvchatfrom:" + (string)(uuid) + "=" + mode;   \
 } while (0)
 
-#define bxRlvDoEmote(name, mode)                                        \
-do {                                                                    \
-    _BX_RLVQ(name) += ",emote=" + mode;                                 \
-} while (0)
+#define bxRlvDoEmote(name, mode) _bxRlvDo1(",emote=", name, mode)
 
 #define bxRlvDoRedirEmote(name, channel, mode)                          \
 do {                                                                    \
     _BX_RLVQ(name) += ",rediremote:" + (string)(channel) + "=" + mode;  \
 } while (0)
 
-#define bxRlvDoRecvEmote(name, mode)                                    \
-do {                                                                    \
-    _BX_RLVQ(name) += ",recvemote=" + mode;                             \
-} while (0)
-
-#define bxRlvDoRecvEmoteSec(name, mode)                                 \
-do {                                                                    \
-    _BX_RLVQ(name) += ",recvemote_sec=" + mode;                         \
-} while (0)
+#define bxRlvDoRecvEmote(name, mode) _bxRlvDo1(",recvemote=", name, mode)
+#define bxRlvDoRecvEmoteSec(name, mode) _bxRlvDo1(",recvemote_sec=", name, mode)
 
 #define bxRlvDoRecvEmoteFrom(name, uuid, mode)                          \
 do {                                                                    \
@@ -361,52 +327,25 @@ do {                                                                    \
     _BX_RLVQ(name) += ",sendchannel_sec" + __bxC + "=" + mode;          \
 } while (0)
 
-#define bxRlvDoSendIm(name, uuid, mode)                                 \
-do {                                                                    \
-    string __bxUuid = (string)(uuid);                                   \
-    if ("" != __bxUuid) {                                               \
-        __bxUuid = ":" + __bxUuid;                                      \
-    }                                                                   \
-    _BX_RLVQ(name) += ",sendim" + __bxUuid + "=" mode;                  \
-} while (0)
+#define bxRlvDoSendIm(name, uuid, mode) _bxRlvDoKey(",sendim", name, uuid, mode)
 
-#define bxRlvDoSendImSec(name, mode)                                    \
-do {                                                                    \
-    _BX_RLVQ(name) += ",sendim_sec=" + mode;                            \
-} while (0)
+#define bxRlvDoSendImSec(name, mode) _bxRlvDo1(",sendim_sec=", name, mode)
 
 #define bxRlvDoSendImTo(name, uuid, mode)                               \
 do {                                                                    \
     _BX_RLVQ(name) += ",sendimto:" + (string)(uuid) + "=" + mode;       \
 } while (0)
 
-#define bxRlvDoStartIm(name, uuid, mode)                                \
-do {                                                                    \
-    string __bxUuid = (string)(uuid);                                   \
-    if ("" != __bxUuid) {                                               \
-        __bxUuid = ":" + __bxUuid;                                      \
-    }                                                                   \
-    _BX_RLVQ(name) += ",startim" + __bxUuid + "=" mode;                 \
-} while (0)
+#define bxRlvDoStartIm(name, uuid, mode) _bxRlvDoKey(",startim", name, uuid, mode)
 
 #define bxRlvDoStartImTo(name, uuid, mode)                              \
 do {                                                                    \
     _BX_RLVQ(name) += ",startimto:" + (string)(uuid) + "=" + mode;      \
 } while (0)
 
-#define bxRlvDoRecvIm(name, uuid, mode)                                 \
-do {                                                                    \
-    string __bxUuid = (string)(uuid);                                   \
-    if ("" != __bxUuid) {                                               \
-        __bxUuid = ":" + __bxUuid;                                      \
-    }                                                                   \
-    _BX_RLVQ(name) += ",recvim" + __bxUuid + "=" mode;                  \
-} while (0)
+#define bxRlvDoRecvIm(name, uuid, mode) _bxRlvDoKey(",recvim", name, uuid, mode)
 
-#define bxRlvDoRecvImSec(name, mode)                                    \
-do {                                                                    \
-    _BX_RLVQ(name) += ",recvim_sec=" + mode;                            \
-} while (0)
+#define bxRlvDoRecvImSec(name, mode) _bxRlvDo1(",recvim_sec=", name, mode)
 
 #define bxRlvDoRecvImFrom(name, uuid, mode)                             \
 do {                                                                    \
@@ -425,21 +364,14 @@ do {                                                                    \
 #define BOX_RLV_TP_TO               106
 #define BOX_RLV_ACCEPT_TP           107
 
-#define bxRlvDoTpLm(name, mode) do { _BX_RLVQ(name) += ",tplm=" + mode; } while (0)
-#define bxRlvDoTpLoc(name, mode) do { _BX_RLVQ(name) += ",tploc=" + mode; } while (0)
+#define bxRlvDoTpLm(name, mode) _bxRlvDo1(",tplm=", name, mode)
+#define bxRlvDoTpLoc(name, mode) _bxRlvDo1(",tploc=", name, mode)
 
-#define bxRlvDoTpLure(name, uuid, mode)                                 \
-do {                                                                    \
-    string __bxUuid = (string)(uuid);                                   \
-    if ("" != __bxUuid) {                                               \
-        __bxUuid = ":" + __bxUuid;                                      \
-    }                                                                   \
-    _BX_RLVQ(name) += ",tplure" + __bxUuid + "=" + mode;                \
-} while (0)
+#define bxRlvDoTpLure(name, uuid, mode) _bxRlvDoKey(",tplure", name, uuid, mode)
 
-#define bxRlvDoTpLureSec(name, mode) do { _BX_RLVQ(name) += ",tplure_sec=" + mode; } while (0)
-#define bxRlvDoSitTp(name, mode) do { _BX_RLVQ(name) += ",sittp=" + mode; } while (0)
-#define bxRlvDoStandTp(name, mode) do { _BX_RLVQ(name) += ",standtp=" + mode; } while (0)
+#define bxRlvDoTpLureSec(name, mode) _bxRlvDo1(",tplure_sec=", name, mode)
+#define bxRlvDoSitTp(name, mode) _bxRlvDo1(",sittp=", name, mode)
+#define bxRlvDoStandTp(name, mode) _bxRlvDo1(",standtp=", name, mode)
 
 #define bxRlvDoTpTo(name, x, y, z)                                      \
 do {                                                                    \
@@ -449,14 +381,7 @@ do {                                                                    \
                                + "=force";                              \
 } while (0)
 
-#define bxRlvDoAcceptTp(name, uuid, mode)                               \
-do {                                                                    \
-    string __bxUuid = (string)(uuid);                                   \
-    if ("" != __bxUuid) {                                               \
-        __bxUuid = ":" + __bxUuid;                                      \
-    }                                                                   \
-    _BX_RLVQ(name) += ",accepttp" + __bxUuid + "=" + mode;              \
-} while (0)
+#define bxRlvDoAcceptTp(name, uuid, mode) _bxRlvDoKey(",accepttp", name, uuid, mode)
 
 //
 // Inventory, Editing, Rezzing
@@ -469,21 +394,12 @@ do {                                                                    \
 #define BOX_RLV_REZ                 115
 #define BOX_RLV_EDIT_OBJ            116
 
-#define bxRlvDoShowInv(name, mode) do { _BX_RLVQ(name) += ",showinv=" + mode; } while (0)
-#define bxRlvDoViewNote(name, mode) do { _BX_RLVQ(name) += ",viewnote=" + mode; } while (0)
-#define bxRlvDoViewScript(name, mode) do { _BX_RLVQ(name) += ",viewscript=" + mode; } while (0)
-#define bxRlvDoViewTexture(name, mode) do { _BX_RLVQ(name) += ",viewtexture=" + mode; } while (0)
-
-#define bxRlvDoEdit(name, uuid, mode)                                   \
-do {                                                                    \
-    string __bxUuid = (string)(uuid);                                   \
-    if ("" != __bxUuid) {                                               \
-        __bxUuid = ":" + __bxUuid;                                      \
-    }                                                                   \
-    _BX_RLVQ(name) += ",edit" + __bxUuid + "=" + mode;                  \
-} while (0)
-
-#define bxRlvDoRez(name, mode) do { _BX_RLVQ(name) += ",rez=" + mode; } while (0)
+#define bxRlvDoShowInv(name, mode) _bxRlvDo1(",showinv=", name, mode)
+#define bxRlvDoViewNote(name, mode) _bxRlvDo1(",viewnote=", name, mode)
+#define bxRlvDoViewScript(name, mode) _bxRlvDo1(",viewscript=", name, mode)
+#define bxRlvDoViewTexture(name, mode) _bxRlvDo1(",viewtexture=", name, mode)
+#define bxRlvDoEdit(name, uuid, mode) _bxRlvDoKey(",edit", name, uuid, mode)
+#define bxRlvDoRez(name, mode) _bxRlvDo1(",rez=", name, mode)
 
 #define bxRlvDoEditObj(name, uuid, mode)                                \
 do {                                                                    \
@@ -496,6 +412,8 @@ do {                                                                    \
 #define BOX_RLV_SIT                 120
 #define BOX_RLV_UNSIT               121
 #define BOX_RLV_GET_SIT_ID          122
+
+#define bxRlvDoSit(name, uuid, mode) _bxRlvDoKey(",sit", name, uuid, mode)
 
 //
 // Clothing & Attachments
