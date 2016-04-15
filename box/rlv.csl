@@ -414,6 +414,11 @@ do {                                                                    \
 #define BOX_RLV_GET_SIT_ID          122
 
 #define bxRlvDoSit(name, uuid, mode) _bxRlvDoKey(",sit", name, uuid, mode)
+#define bxRlvDoUnsit(name, mode) _bxRlvDo1(",unsit", name, mode)
+#define bxRlvBeginGetSitId(name, timeout) _bxRlvQ##name(BOX_RLV_GET_SIT_ID,     \
+                                                     (timeout),                 \
+                                                     "getsitid=",               \
+                                                     "")
 
 //
 // Clothing & Attachments
