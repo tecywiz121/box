@@ -434,6 +434,28 @@ do {                                                                    \
 #define BOX_RLV_ACCEPT_PERMISSION   138
 #define BOX_RLV_DETACH_ME           139
 
+#define bxRlvDoDetach(name, part, mode) _bxRlvDoKey(",detach", name, part, mode)
+#define bxRlvDoAddAttach(name, part, mode) _bxRlvDoKey(",addattach", name, part, mode)
+#define bxRlvDoRemAttach(name, part, mode) _bxRlvDoKey(",remattach", name, part, mode)
+#define bxRlvDoDefaultWear(name, mode) _bxRlvDo1(",defaultwear=", name, mode)
+#define bxRlvDoAddOutfit(name, part, mode) _bxRlvDoKey(",addoutfit", name, part, mode)
+#define bxRlvDoRemOutfit(name, part, mode) _bxRlvDoKey(",remoutfit", name, part, mode)
+#define bxRlvBeginGetOutfit(name, timeout, part)                        \
+    _bxRlvQ2##name(BOX_RLV_GET_OUTFIT,                                  \
+                   (timeout),                                           \
+                   "getoutfit",                                         \
+                   part)
+
+#define bxRlvBeginGetAttach(name, timeout, part)                        \
+    _bxRlvQ2##name(BOX_RLV_GET_ATTACH,                                  \
+                   (timeout),                                           \
+                   "getattach",                                         \
+                   part)
+
+
+#define bxRlvDoAcceptPermission(name, mode) _bxRlvDo1(",acceptpermission=", name, mode)
+#define bxRlvDoDetachMe(name, mode) _bxRlvDo1(",detachme=", name, mode)
+
 //
 // Clothing & Attachments (Shared Folders)
 //
