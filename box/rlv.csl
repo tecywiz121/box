@@ -552,6 +552,16 @@ do {                                                                    \
 #define BOX_RLV_TOUCH_ATTACH_SELF   186
 #define BOX_RLV_TOUCH_ATTACH_OTHER  187
 
+// fartouch is more supported than touchfar, but touchfar is the better name.
+#define bxRlvDoTouchFar(name, mode) _bxRlvDo1(",fartouch=", name, mode)
+#define bxRlvDoTouchAll(name, mode) _bxRlvDo1(",touchall=", name, mode)
+#define bxRlvDoTouchWorld(name, uuid, mode) _bxRlvDoKey(",touchworld", name, uuid, mode)
+#define bxRlvDoTouchThis(name, uuid, mode) _bxRlvDo2(",touchthis:", name, uuid, mode)
+#define bxRlvDoTouchMe(name, mode) _bxRlvDo1(",touchme=", name, mode)
+#define bxRlvDoTouchAttach(name, mode) _bxRlvDo1(",touchattach=", name, mode)
+#define bxRlvDoTouchAttachSelf(name, mode) _bxRlvDo1(",touchattachself=", name, mode)
+#define bxRlvDoTouchAttachOther(name, mode) _bxRlvDo1(",touchattachother=", name, mode)
+
 //
 // Location
 //
