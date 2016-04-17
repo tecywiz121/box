@@ -58,6 +58,8 @@ do {                                                                    \
     _BX_RLVQ(name) += cmd + mode;                                       \
 } while (0)
 
+#define _bxRlvDo2(cmd, name, arg, mode) _bxRlvDo1(cmd, (name) + (arg) + "=", mode)
+
 
 #define BOX_RLV_REM "rem"
 #define BOX_RLV_ADD "add"
@@ -482,6 +484,61 @@ do {                                                                    \
 #define BOX_RLV_DETACH_ALL_THIS_EXCEPT      170
 #define BOX_RLV_ATTACH_THIS_EXCEPT          171
 #define BOX_RLV_ATTACH_ALL_THIS_EXCEPT      172
+
+#define bxRlvDoUnsharedWear(name, mode) _bxRlvDo1(",unsharedwear=", name, mode)
+#define bxRlvDoUnsharedUnwear(name, mode) _bxRlvDo1(",unsharedunwear=", name, mode)
+
+#define bxRlvBeginGetInv(name, timeout, folder)                         \
+    _bxRlvQ2##name(BOX_RLV_GET_INV,                                     \
+                   (timeout),                                           \
+                   "getinv",                                            \
+                   folder)
+
+#define bxRlvBeginGetInvWorn(name, timeout, folder)                     \
+    _bxRlvQ2##name(BOX_RLV_GET_INV_WORN,                                \
+                   (timeout),                                           \
+                   "getinvworn",                                        \
+                   folder)
+
+#define bxRlvBeginFindFolder(name, timeout, parts)                      \
+    _bxRlvQ2##name(BOX_RLV_FIND_FOLDER,                                 \
+                   (timeout),                                           \
+                   "findfolder",                                        \
+                   folder)
+
+#define bxRlvDoAttach(name, folder, mode) _bxRlvDo2(",attach:", name, folder, mode)
+#define bxRlvDoAttachOver(name, folder, mode) _bxRlvDo2(",attachover:", name, folder, mode)
+#define bxRlvDoAttachOverOrReplace(name, folder, mode) _bxRlvDo2(",attachoverorreplace:", name, folder, mode)
+#define bxRlvDoAttachAll(name, folder, mode) _bxRlvDo2(",attachall:", name, folder, mode)
+#define bxRlvDoAttachAllOver(name, folder, mode) _bxRlvDo2(",attachall:", name, folder, mode)
+#define bxRlvDoAttachAllOverOrReplace(name, folder, mode) _bxRlvDo2(",attachalloverorreplace:", name, folder, mode)
+#define bxRlvDoDetachAll(name, folder, mode) _bxRlvDo2(",detachall:", name, folder, mode)
+
+#define bxRlvDoGetPath(name, timeout, where)                            \
+    _bxRlvQ2##name(BOX_RLV_GET_PATH,                                    \
+                   (timeout),                                           \
+                   "getpath",                                           \
+                   where)
+
+#define bxRlvDoGetPathNew(name, timeout, where)                         \
+    _bxRlvQ2##name(BOX_RLV_GET_PATH,                                    \
+                   (timeout),                                           \
+                   "getpath",                                           \
+                   where)
+
+#define bxRlvDoAttachThis(name, where, mode) _bxRlvDoKey(",attachthis", name, where, mode)
+#define bxRlvDoAttachThisOver(name, where, mode) _bxRlvDoKey(",attachthisover", name, where, mode)
+#define bxRlvDoAttachThisOverOrReplace(name, where, mode) _bxRlvDoKey(",attachthisoverorreplace", name, where, mode)
+#define bxRlvDoAttachAllThis(name, where, mode) _bxRlvDoKey(",attachallthis", name, where, mode)
+#define bxRlvDoAttachAllThisOver(name, where, mode) _bxRlvDoKey(",attachallthisover", name, where, mode)
+#define bxRlvDoAttachAllThisOverOrReplace(name, where, mode) _bxRlvDoKey(",attachallthisoverorreplace", name, where, mode)
+#define bxRlvDoDetachThis(name, where, mode) _bxRlvDoKey(",detachthis", name, where, mode)
+#define bxRlvDoDetachAllThis(name, where, mode) _bxRlvDoKey(",detachallthis", name, where, mode)
+
+#define bxRlvDoDetachThisExcept(name, folder, mode) _bxRlvDo2(",detachthis_except:", name, folder, mode)
+#define bxRlvDoDetachAllThisExcept(name, folder, mode) _bxRlvDo2(",detachallthis_except:", name, folder, mode)
+#define bxRlvDoAttachThisExcept(name, folder, mode) _bxRlvDo2(",attachthis_except:", name, folder, mode)
+#define bxRlvDoAttachAllThisExcept(name, folder, mode) _bxRlvDo2(",attachallthis_except:", name, folder, mode)
 
 //
 // Touch
