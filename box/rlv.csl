@@ -569,6 +569,10 @@ do {                                                                    \
 #define BOX_RLV_SHOW_MINI_MAP       191
 #define BOX_RLV_SHOW_LOC            192
 
+#define bxRlvDoShowWorldMap(name, mode) _bxRlvDo1(",showworldmap=", name, mode)
+#define bxRlvDoShowMiniMap(name, mode) _bxRlvDo1(",showminimap=", name, mode)
+#define bxRlvDoShowLoc(name, mode) _bxRlvDo1(",showloc=", name, mode)
+
 //
 // Name Tags & Hovertext
 //
@@ -578,11 +582,24 @@ do {                                                                    \
 #define BOX_RLV_SHOW_HOVERTEXT_HUD      203
 #define BOX_RLV_SHOW_HOVERTEXT_WORLD    204
 
+#define bxRlvDoShowNames(name, mode) _bxRlvDo1(",shownames=", name, mode)
+#define bxRlvDoShowHovertextAll(name, mode) _bxRlvDo1(",showhovertextall=", name, mode)
+#define bxRlvDoShowHovertext(name, uuid, mode) _bxRlvDo2(",showhovertext:", name, uuid, mode)
+#define bxRlvDoShowHovertextHud(name, mode) _bxRlvDo1(",showhovertexthud=", name, mode)
+#define bxRlvDoShowHovertextWorld(name, mode) _bxRlvDo1(",showhovertextworld=", name, mode)
+
 //
 // Group
 //
 #define BOX_RLV_SET_GROUP   210
 #define BOX_RLV_GET_GROUP   211
+
+#define bxRlvDoSetGroup(name, group, mode) _bxRlvDoKey(",setgroup", name, group, mode)
+#define bxRlvBeginGetGroup(name, timeout) _bxRlvQ##name(BOX_RLV_GET_GROUP,  \
+                                                        (timeout),          \
+                                                        "getgroup=",        \
+                                                        "")
+
 
 //
 // Viewer Control
@@ -591,6 +608,37 @@ do {                                                                    \
 #define BOX_RLV_GET_DEBUG   221
 #define BOX_RLV_SET_ENV     222
 #define BOX_RLV_GET_ENV     223
+
+#define bxRlvDoSetDebug(name, setting, value, mode)                         \
+do {                                                                        \
+    string __bxS = (string)(setting);                                       \
+    if ("" != __bxS) {                                                      \
+        __bxS = "_" + __bxS + ":" + (string)(value);                        \
+    }                                                                       \
+    _BX_RLVQ(name) += ",setdebug" + __bxS + "=" + mode;                     \
+} while (0)
+
+#define bxRlvBeginGetDebug(name, timeout, setting)                          \
+    _bxRlvQ##name(BOX_RLV_GET_DEBUG,                                        \
+                  (timeout),                                                \
+                  "getdebug_" + (string)(setting) + "=",                    \
+                  "")
+
+#define bxRlvDoSetEnv(name, setting, value, mode)                           \
+do {                                                                        \
+    string __bxS = (string)(setting);                                       \
+    if ("" != __bxS) {                                                      \
+        __bxS = "_" + __bxS + ":" + (string)(value);                        \
+    }                                                                       \
+    _BX_RLVQ(name) += ",setenv" + __bxS + "=" + mode;                       \
+} while (0)
+
+
+#define bxRlvBeginGetEnv(name, timeout, setting)                            \
+    _bxRlvQ##name(BOX_RLV_GET_ENV,                                          \
+                  (timeout),                                                \
+                  "getenv_" + (string)(setting) + "=",                      \
+                  "")
 
 #endif /* BOX_RLV_CSL */
 /* vim: set et sw=4 sts=4 ts=4: */
