@@ -11,8 +11,9 @@
 #define BOX_ASYNC(tgrp)                                                     \
 integer _bxAsyncBegin##tgrp(integer type, float timeout, integer owner_only)\
 {                                                                           \
-    /* Restrict type to 0-2047 */                                           \
-    type = (0x7FF & type) << 20;                                            \
+    /* Restrict type to 0-0x3FFFFFFF */                                     \
+    type = 0x3FFFFFFF & type;                                               \
+    type = 0x40000000 | type;                                               \
                                                                             \
     key sender = NULL_KEY;                                                  \
     if (owner_only) {                                                       \
@@ -29,18 +30,28 @@ integer _bxAsyncBegin##tgrp(integer type, float timeout, integer owner_only)\
 }                                                                           \
 list _bxAsyncFinish##tgrp(integer channel, key sender)                      \
 {                                                                           \
-    integer id = bxTimerStopOnce(tgrp, channel);                            \
+    integer id = bxTimerGetId(tgrp, channel);                               \
     if (0 == id) {                                                          \
         return [];                                                          \
     }                                                                       \
                                                                             \
     if ((id & 0x80000000) == 0) {                                           \
         sender = NULL_KEY;                                                  \
-    } else if (sender != llGetOwner()) {                                    \
+    } else {                                                                \
+        id = 0x7FFFFFFF & id;                                               \
+        if (sender != llGetOwner()) {                                       \
+            return [];                                                      \
+        }                                                                   \
+    }                                                                       \
+                                                                            \
+    /* Make sure this is actually an async timer before removing it */      \
+    if (id < 0x40000000) {                                                  \
         return [];                                                          \
     }                                                                       \
                                                                             \
-    id = 0x7FF & (id >> 20);                                                \
+    bxTimerStopOnce(tgrp, channel);                                         \
+                                                                            \
+    id = 0x3FFFFFFF & id;                                                   \
                                                                             \
     /* Get back original handle by calling llListen with same arguments */  \
     llListenRemove(llListen(channel, "", sender, ""));                      \
@@ -48,16 +59,17 @@ list _bxAsyncFinish##tgrp(integer channel, key sender)                      \
 }                                                                           \
 list _bxAsyncExpire##tgrp(integer id, integer handle)                       \
 {                                                                           \
-    if (!(id & 0xFFF00000) || (id & 0x000FFFFF)) {                          \
-        return [];                                                          \
-    }                                                                       \
     key sender = NULL_KEY;                                                  \
     if (id & 0x80000000) {                                                  \
         sender = llGetOwner();                                              \
+        id = id & 0x7FFFFFFF;                                               \
+    }                                                                       \
+    if (id < 0x40000000) {                                                  \
+        return [];                                                          \
     }                                                                       \
     /* Get back original handle by calling llListen with same arguments */  \
     llListenRemove(llListen(handle, "", sender, ""));                       \
-    return [handle, 0x7FF & (id >> 20)];                                    \
+    return [handle, 0x3FFFFFFF & id];                                       \
 }
 
 /**

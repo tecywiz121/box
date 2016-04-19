@@ -139,6 +139,18 @@ integer _bxTimerStopOnce##name(integer handle)                      \
     }                                                               \
     return 0;                                                       \
 }                                                                   \
+integer _bxTimerGetId##name(integer handle)                         \
+{                                                                   \
+    integer ii;                                                     \
+    for (ii = bxTimerCount(name) - 1; ii >= 0; ii--) {              \
+        if (_bxTgrpType(name, ii) == BOX_TIMER_TYPE_ONCE) {         \
+            if (_bxTgrpHandle(name, ii) == handle) {                \
+                return _bxTgrpId(name, ii);                         \
+            }                                                       \
+        }                                                           \
+    }                                                               \
+    return 0;                                                       \
+}                                                                   \
 integer _bxTimerStop##name(integer id, integer all)                 \
 {                                                                   \
     integer ii = 0;                                                 \
@@ -224,6 +236,15 @@ integer _bxTimerStop##name(integer id, integer all)                 \
  *          was found.
  */
 #define bxTimerStopOnce(group, handle)  _bxTimerStopOnce##group(handle)
+
+/**
+ * Get the id of the event with the matching handle.
+ * @param group void Name of the timer group created with BOX_TIMER_GROUP.
+ * @param handle integer A handle used to create a timer with bxTimerStartOnce.
+ * @returns The id of the timer with the matching handle, or zero if no matching
+ *          timer was found.
+ */
+#define bxTimerGetId(group, handle) _bxTimerGetId##group(handle)
 
 #define _BX_TEVI(name) __bxII##name
 #define _BX_TEVL(name) __bxEv##name

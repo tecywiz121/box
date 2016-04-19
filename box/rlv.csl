@@ -11,7 +11,7 @@ integer _bxRlvQ##name(integer type,                                     \
                           string before,                                \
                           string after)                                 \
 {                                                                       \
-    integer c = bxAsyncBegin(tgrp, 0x700|(type&0xFF), timeout, TRUE);   \
+    integer c = bxAsyncBegin(tgrp, 0x20000000 | type, timeout, TRUE);   \
     _BX_RLVQ(name) += "," + before + (string)c + after;                 \
     return c;                                                           \
 }                                                                       \
