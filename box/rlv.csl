@@ -88,15 +88,25 @@ do {                                                                    \
                                                      "versionnum=",             \
                                                      "")
 
+#define bxRlvParseVersionNum(message) ((integer)message)
+
 #define bxRlvBeginVersionNumBl(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NUM_BL, \
                                                        (timeout),                   \
                                                        "versionnumbl=",             \
                                                        "")
 
+list bxRlvParseVersionNumBl(string message)
+{
+    return llListReplaceList(llParseStringKeepNulls(message, [","], []),
+                             [(integer)message], 0, 0);
+}
+
 #define bxRlvBeginVersionNew(name, timeout) _bxRlvQ##name(BOX_RLV_VERSION_NEW,  \
                                                      (timeout),                 \
                                                      "versionnew=",             \
                                                      "")
+
+#define bxRlvParseVersionNew(message) (message)
 
 //
 // Blacklist
@@ -108,6 +118,8 @@ do {                                                                    \
                    (timeout),                                           \
                    "getblacklist",                                      \
                    filter)
+
+#define bxRlvParseGetBlacklist(message) llParseStringKeepNulls((message), [","], [])
 
 //
 // Miscellaneous
@@ -145,11 +157,17 @@ do {                                                                    \
                    (needle),                                            \
                    (sep))
 
+#define bxRlvParseGetStatus2(message, sep) llParseString2List((message), [(sep)], [])
+#define bxRlvParseGetStatus(message) bxRlvParseGetStatus2(message, "/")
+
 #define bxRlvBeginGetStatusAll(name, timeout, needle, sep)              \
     _bxRlvQ3##name(BOX_RLV_GET_STATUS_ALL,                              \
                    (timeout),                                           \
                    (needle),                                            \
                    (sep))
+
+#define bxRlvParseGetStatusAll2(message, sep) bxRlvParseGetStatus(message, sep)
+#define bxRlvParseGetStatusAll(message) bxRlvParseGetStatus2(message, "/")
 
 //
 // Movement
@@ -432,6 +450,8 @@ do {                                                                    \
                                                      "getsitid=",               \
                                                      "")
 
+#define bxRlvParseGetSitId(message) ((key)message)
+
 //
 // Clothing & Attachments
 //
@@ -458,12 +478,28 @@ do {                                                                    \
                    "getoutfit",                                         \
                    part)
 
+list bxRlvParseGetOutfit(string message)
+{
+    list result = [];
+    integer ii;
+    integer count = llStringLength(message);
+    for (ii = 0; ii < count; ii++) {
+        if (llGetSubString(message, ii, ii) == "1") {
+            result += [TRUE];
+        } else {
+            result += [FALSE];
+        }
+    }
+    return result;
+}
+
 #define bxRlvBeginGetAttach(name, timeout, part)                        \
     _bxRlvQ2##name(BOX_RLV_GET_ATTACH,                                  \
                    (timeout),                                           \
                    "getattach",                                         \
                    part)
 
+#define bxRlvParseGetAttach(message) bxRlvParseGetOutfit(message)
 
 #define bxRlvDoAcceptPermission(name, mode) _bxRlvDo1(",acceptpermission=", name, mode)
 #define bxRlvDoDetachMe(name, mode) _bxRlvDo1(",detachme=", name, mode)
@@ -504,17 +540,54 @@ do {                                                                    \
                    "getinv",                                            \
                    folder)
 
+#define bxRlvParseGetInv(message) llParseStringKeepNulls((message), [","], [])
+
 #define bxRlvBeginGetInvWorn(name, timeout, folder)                     \
     _bxRlvQ2##name(BOX_RLV_GET_INV_WORN,                                \
                    (timeout),                                           \
                    "getinvworn",                                        \
                    folder)
 
+#define BOX_RLV_INV_WORN_STRIDE (3)
+#define bxRlvInvWornFolder(result, idx) llList2String((result), (BOX_RLV_INV_WORN_STRIDE*idx))
+#define bxRlvInvWornSelf(result, idx) llList2Integer((result), (BOX_RLV_INV_WORN_STRIDE*idx)+1)
+#define bxRlvInvWornChildren(result, idx) llList2Integer((result), (BOX_RLV_INV_WORN_STRIDE*idx)+2)
+#define bxRlvInvWornCount(result) (llGetListLength(result)/BOX_RLV_INV_WORN_STRIDE)
+
+#define BOX_RLV_WORN_EMPTY (0)
+#define BOX_RLV_WORN_NONE  (1)
+#define BOX_RLV_WORN_SOME  (2)
+#define BOX_RLV_WORN_ALL   (3)
+
+list bxRlvParseGetInvWorn(string message)
+{
+    list parts = llParseString2List(message, [","], []);
+    list results;
+
+    integer count = llGetListLength(parts);
+    integer ii;
+    for (ii = 0; ii < count; ii++) {
+        list folder = llParseStringKeepNulls(llList2String(parts, ii), ["|"], []);
+        string name = "";
+        string worn = llList2String(folder, 0);
+        if (llGetListLength(folder) == 2) {
+            name = worn;
+            worn = llList2String(folder, 1);
+        }
+        results += [name,
+                    (integer)llGetSubString(worn, 0, 0),
+                    (integer)llGetSubString(worn, 1, 1)];
+    }
+    return results;
+}
+
 #define bxRlvBeginFindFolder(name, timeout, parts)                      \
     _bxRlvQ2##name(BOX_RLV_FIND_FOLDER,                                 \
                    (timeout),                                           \
                    "findfolder",                                        \
-                   folder)
+                   parts)
+
+#define bxRlvParseFindFolder(message) (message)
 
 #define bxRlvDoAttach(name, folder, mode) _bxRlvDo2(",attach:", name, folder, mode)
 #define bxRlvDoAttachOver(name, folder, mode) _bxRlvDo2(",attachover:", name, folder, mode)
@@ -524,17 +597,21 @@ do {                                                                    \
 #define bxRlvDoAttachAllOverOrReplace(name, folder, mode) _bxRlvDo2(",attachalloverorreplace:", name, folder, mode)
 #define bxRlvDoDetachAll(name, folder, mode) _bxRlvDo2(",detachall:", name, folder, mode)
 
-#define bxRlvDoGetPath(name, timeout, where)                            \
+#define bxRlvBeginGetPath(name, timeout, where)                         \
     _bxRlvQ2##name(BOX_RLV_GET_PATH,                                    \
                    (timeout),                                           \
                    "getpath",                                           \
                    where)
 
-#define bxRlvDoGetPathNew(name, timeout, where)                         \
+#define bxRlvParseGetPath(message) (message)
+
+#define bxRlvBeginGetPathNew(name, timeout, where)                      \
     _bxRlvQ2##name(BOX_RLV_GET_PATH,                                    \
                    (timeout),                                           \
                    "getpath",                                           \
                    where)
+
+#define bxRlvParseGetPathNew(message) llParseString2List((message), [","], [])
 
 #define bxRlvDoAttachThis(name, where, mode) _bxRlvDoKey(",attachthis", name, where, mode)
 #define bxRlvDoAttachThisOver(name, where, mode) _bxRlvDoKey(",attachthisover", name, where, mode)
@@ -610,6 +687,7 @@ do {                                                                    \
                                                         "getgroup=",        \
                                                         "")
 
+#define bxRlvParseGetGroup(message) (message)
 
 //
 // Viewer Control
@@ -634,6 +712,8 @@ do {                                                                        \
                   "getdebug_" + (string)(setting) + "=",                    \
                   "")
 
+#define bxRlvParseGetDebug(message) (message)
+
 #define bxRlvDoSetEnv(name, setting, value, mode)                           \
 do {                                                                        \
     string __bxS = (string)(setting);                                       \
@@ -649,6 +729,8 @@ do {                                                                        \
                   (timeout),                                                \
                   "getenv_" + (string)(setting) + "=",                      \
                   "")
+
+#define bxRlvParseGetEnv(message) (message)
 
 #endif /* BOX_RLV_CSL */
 /* vim: set et sw=4 sts=4 ts=4: */
