@@ -40,9 +40,18 @@ _bxRlvFlush##name()                                                     \
 {                                                                       \
     llOwnerSay("@" + llDeleteSubString(_BX_RLVQ(name), 0, 0));          \
     _BX_RLVQ(name) = "";                                                \
+}                                                                       \
+integer _bxRlvFinish##name(integer id)                                  \
+{                                                                       \
+    if (!(id & 0x20000000)) {                                           \
+        return 0;                                                       \
+    }                                                                   \
+                                                                        \
+    return id & 0x1FFFFFFF;                                             \
 }
 
 #define bxRlvFlush(name) _bxRlvFlush##name()
+#define bxRlvFinish(name, id) _bxRlvFinish##name(id)
 
 #define _bxRlvDoKey(cmd, name, uuid, mode)                              \
 do {                                                                    \
@@ -65,6 +74,7 @@ do {                                                                    \
 #define BOX_RLV_ADD "add"
 #define BOX_RLV_ALLOW "y"
 #define BOX_RLV_DENY "n"
+#define BOX_RLV_FORCE "force"
 
 //
 // Version Checking
