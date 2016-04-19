@@ -125,8 +125,8 @@ integer _bxTimerStopOnce##name(integer handle)                      \
                 integer id = _bxTgrpId(name, ii);                   \
                 _BX_TGRP(name) =                                    \
                     llDeleteSubList(bxMove(_BX_TGRP(name)),         \
-                                    ii,                             \
-                                    ii+_BX_TGRP_STRIDE-1);          \
+                                    (ii*_BX_TGRP_STRIDE),           \
+                                    ((ii+1)*_BX_TGRP_STRIDE)-1);    \
                 if (0 == ii) {                                      \
                     if (0 == bxTimerCount(name)) {                  \
                         _BX_TDELTA(name) = 0.0;                     \
