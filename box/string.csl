@@ -32,4 +32,13 @@ integer bxStrCmp(string a, string b)
     }
 }
 
+#define bxStrLen(a) llStringLength(a)
+
+// This monstrosity is faster than looping implementations for short strings.
+#define bxStrUtf8Bytes(a) ((llStringLength((string)llParseString2List(llStringToBase64(a), ["="], [])) * 3) >> 2)
+
+#define bxStrReplace(haystack, needle, replace) llDumpList2String(llParseStringKeepNulls((haystack), [(needle)], []), (replace))
+
+#define BOX_STR_ZWS "​"
+
 #endif /* BOX_STRING_CSL */
