@@ -1,0 +1,218 @@
+#ifndef BOX_DIALOG_CSL
+#define BOX_DIALOG_CSL 1
+
+#include <box/memory.csl>
+#include <box/string.csl>
+#include <box/async.csl>
+
+#define BOX_BUTTON_DEFAULT_RENDER_LENGTH (7)
+
+#ifndef BOX_BUTTON_RENDER_LENGTH
+#   define BOX_BUTTON_RENDER_LENGTH BOX_BUTTON_DEFAULT_RENDER_LENGTH
+#endif
+
+#define BOX_BUTTON_NEXT __bxDlgNext
+string BOX_BUTTON_NEXT = "Next ⇨";
+
+#define BOX_BUTTON_BACK __bxDlgBack
+string BOX_BUTTON_BACK = "⇦ Back";
+
+#define BOX_BUTTON_DEFAULT_MID_LABEL BOX_STR_ZWS
+
+#ifndef BOX_BUTTON_MID_LABEL
+#   define BOX_BUTTON_MID_LABEL BOX_BUTTON_DEFAULT_MID_LABEL
+#endif
+
+list _bxDialogEscapeAll(list btns)
+{
+    integer ii;
+    for (ii = llGetListLength(btns)-1; ii >= 0; ii--) {
+        string text = llList2String(btns, ii);
+        if ("" == text
+            || "Mute" == text
+            || "Ignore" == text
+            || "Client_Side_Ignore" == text
+            || "Client_Side_Mute" == text
+            || "!!" == llGetSubString(text, 0, 1)
+            || BOX_STR_ZWS == llGetSubString(text, 0, 0)) {
+            btns = llListReplaceList(bxMove(btns),
+                                     [BOX_STR_ZWS + text],
+                                     ii,
+                                     ii);
+        }
+    }
+    return btns;
+}
+
+string _bxDialogUnescape(string text)
+{
+    if (BOX_STR_ZWS == llGetSubString(text, 0, 0)) {
+        return llDeleteSubString(text, 0, 0);
+    } else {
+        return text;
+    }
+}
+
+integer _bxDialogGetId(integer id, list btns)
+{
+    integer ii;
+    for (ii = llGetListLength(btns)-1; ii >= 0; ii--) {
+        string lbl = llList2String(btns, ii);
+        if (llStringLength(lbl) > BOX_BUTTON_RENDER_LENGTH
+            || bxStrUtf8Bytes(lbl) > 22) {
+            return (id & 0x7FFFFFFF) | 0x18000000;
+        }
+    }
+    return (id & 0x7FFFFFFF) | 0x10000000;
+}
+
+list _bxDialogButtonOrder(list btns)
+{
+    list result;
+    integer c = llGetListLength(btns);
+    if ((c%3) == 2) {
+        btns += [BOX_STR_ZWS];
+        c += 1;
+    } else if ((c%3) == 1) {
+        btns += [BOX_STR_ZWS, BOX_STR_ZWS];
+        c += 2;
+    }
+    while (c >= 3) {
+        result += llList2List(btns, c-3, c-1);
+        btns = llDeleteSubList(btns, c-3, c-1);
+        c -= 3;
+    }
+    return result;
+}
+
+#define _BX_DCH(name) __bxDialogChoices##name
+#define _BX_DID(name) __bxDialogId##name
+#define _BX_DMSG(name) __bxDialogMessage##name
+#define _BX_DPG(name) __bxDialogPage##name
+#define _BX_DAV(name) __bxDialogAvatar##name
+#define _BX_DTM(name) __bxDialogTimeout##name
+
+#define BOX_DIALOG(name, tgrp)                                              \
+integer _BX_DID(name);                                                      \
+key _BX_DAV(name);                                                          \
+list _BX_DMSG(name);                                                        \
+list _BX_DCH(name);                                                         \
+integer _BX_DPG(name);                                                      \
+float _BX_DTM(name);                                                        \
+                                                                            \
+_bxDialogShowLong##name()                                                   \
+{                                                                           \
+                                                                            \
+}                                                                           \
+_bxDialogShowShort##name()                                                  \
+{                                                                           \
+    integer nMsgPage = llGetListLength(_BX_DMSG(name)) - 1;                 \
+    integer nBtnPage = llGetListLength(_BX_DCH(name));                      \
+    list btns;                                                              \
+    if (nBtnPage <= 12 & nMsgPage == 0) {                                   \
+        nBtnPage = 1;                                                       \
+    } else {                                                                \
+        nBtnPage = (nBtnPage + 8) / 9;                                      \
+    }                                                                       \
+                                                                            \
+    if (_BX_DPG(name) == 0) {                                               \
+        btns = [BOX_STR_ZWS];                                               \
+    } else {                                                                \
+        btns = [BOX_BUTTON_BACK];                                           \
+    }                                                                       \
+                                                                            \
+    btns += [BOX_BUTTON_MID_LABEL];                                         \
+                                                                            \
+    integer nPage = nMsgPage + nBtnPage;                                    \
+    if (_BX_DPG(name) < nPage-1) {                                          \
+        btns += [BOX_BUTTON_NEXT];                                          \
+    } else {                                                                \
+        btns += [BOX_STR_ZWS];                                              \
+    }                                                                       \
+                                                                            \
+    if (_BX_DPG(name) < nMsgPage) {                                         \
+        llDialog(_BX_DAV(name),                                             \
+                 llList2String(_BX_DMSG(name), _BX_DPG(name)),              \
+                 btns,                                                      \
+                 bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE));  \
+    } else {                                                                \
+        integer pg = _BX_DPG(name) - nMsgPage;                              \
+        llDialog(_BX_DAV(name),                                             \
+                 llList2String(_BX_DMSG(name), nMsgPage),                   \
+                 _bxDialogButtonOrder(llList2List(_BX_DCH(name),            \
+                                                  pg*9,                     \
+                                                  (pg*9)+8)) + btns,        \
+                 bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE));  \
+                                                                            \
+    }                                                                       \
+}                                                                           \
+                                                                            \
+_bxDialogShow##name(integer id,                                             \
+                    float timeout,                                          \
+                    key avatar,                                             \
+                    string message,                                         \
+                    list buttons)                                           \
+{                                                                           \
+    _BX_DPG(name) = 0;                                                      \
+    _BX_DCH(name) = bxMove(buttons);                                        \
+    _BX_DID(name) = _bxDialogGetId(id, _BX_DCH(name));                      \
+    _BX_DAV(name) = avatar;                                                 \
+    _BX_DMSG(name) = [];                                                    \
+    _BX_DTM(name) = timeout;                                                \
+                                                                            \
+    /* Split message into 128 character chunks to avoid 512 byte limit. */  \
+    do {                                                                    \
+        _BX_DMSG(name) += [llGetSubString(message, 0, 127)];                \
+        message = llDeleteSubString(message, 0, 127);                       \
+    } while ("" != message);                                                \
+    if (_BX_DID(name) & 0x08000000) {                                       \
+        _bxDialogShowLong##name();                                          \
+    } else {                                                                \
+        _BX_DCH(name) = _bxDialogEscapeAll(bxMove(_BX_DCH(name)));          \
+        _bxDialogShowShort##name();                                         \
+    }                                                                       \
+}                                                                           \
+                                                                            \
+list _bxDialogFinish##name(integer id, key sender, string message)          \
+{                                                                           \
+    if (id != _BX_DID(name) || sender != _BX_DAV(name)) {                   \
+        return [];                                                          \
+    }                                                                       \
+                                                                            \
+    integer reshow = -1;                                                    \
+    if (message == BOX_BUTTON_NEXT) {                                       \
+        _BX_DPG(name) += 1;                                                 \
+    } else if (message == BOX_BUTTON_BACK) {                                \
+        _BX_DPG(name) -= 1;                                                 \
+    } else if (message != BOX_STR_ZWS) {                                    \
+        reshow = 1;                                                         \
+    }                                                                       \
+                                                                            \
+    if (_BX_DID(name) & 0x08000000) {                                       \
+        if (reshow < 0) {                                                   \
+            _bxDialogShowLong##name();                                      \
+            return [];                                                      \
+        } else {                                                            \
+            string result = llList2String(bxMove(_BX_DCH(name)),            \
+                                          (integer)message);                \
+            _BX_DMSG(name) = [];                                            \
+            _BX_DAV(name) = "";                                             \
+            return [result];                                                \
+        }                                                                   \
+    } else {                                                                \
+        if (reshow < 0) {                                                   \
+            _bxDialogShowShort##name();                                     \
+            return [];                                                      \
+        } else {                                                            \
+            _BX_DMSG(name) = [];                                            \
+            _BX_DAV(name) = "";                                             \
+            return [_bxDialogUnescape(message)];                            \
+        }                                                                   \
+    }                                                                       \
+}
+
+#define bxDialogShow(name, id, avatar, message, buttons)
+#define bxDialogFinish(name, channel, sender)
+#define bxDialogExpire(name, handle)
+
+#endif /* BOX_DIALOG_CSL */
