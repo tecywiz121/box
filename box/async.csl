@@ -28,34 +28,40 @@ integer _bxAsyncBegin##tgrp(integer type, float timeout, integer owner_only)\
     llListen(channel, "", sender, "");                                      \
     return channel;                                                         \
 }                                                                           \
-list _bxAsyncFinish##tgrp(integer channel, key sender)                      \
+integer _bxAsyncFinishing##tgrp(integer channel, key sender)                \
 {                                                                           \
+    /* Find our timer */                                                    \
     integer id = bxTimerGetId(tgrp, channel);                               \
     if (0 == id) {                                                          \
-        return [];                                                          \
+        return FALSE;                                                       \
     }                                                                       \
                                                                             \
-    if ((id & 0x80000000) == 0) {                                           \
-        sender = NULL_KEY;                                                  \
-    } else {                                                                \
-        id = 0x7FFFFFFF & id;                                               \
+    /* Check if we're an owner only listen */                               \
+    if (id & 0x80000000) {                                                  \
+        id = id & 0x7FFFFFFF;                                               \
         if (sender != llGetOwner()) {                                       \
-            return [];                                                      \
+            return FALSE;                                                   \
         }                                                                   \
     }                                                                       \
                                                                             \
-    /* Make sure this is actually an async timer before removing it */      \
+    /* Make sure this is actually an async timer */                         \
     if (id < 0x40000000) {                                                  \
-        return [];                                                          \
+        return FALSE;                                                       \
     }                                                                       \
                                                                             \
-    bxTimerStopOnce(tgrp, channel);                                         \
-                                                                            \
-    id = 0x3FFFFFFF & id;                                                   \
-                                                                            \
-    /* Get back original handle by calling llListen with same arguments */  \
-    llListenRemove(llListen(channel, "", sender, ""));                      \
-    return [channel, id];                                                   \
+    return 0x3FFFFFFF & id;                                                 \
+}                                                                           \
+_bxAsyncFinish##tgrp(integer channel)                                       \
+{                                                                           \
+    integer id;                                                             \
+    if (0 != (id = bxTimerStopOnce(tgrp, channel))) {                       \
+        key sender = NULL_KEY;                                              \
+        if (id & 0x80000000) {                                              \
+            sender = llGetOwner();                                          \
+        }                                                                   \
+        /* Get original handle by calling llListen with same arguments */   \
+        llListenRemove(llListen(channel, "", sender, ""));                  \
+    }                                                                       \
 }                                                                           \
 list _bxAsyncExpire##tgrp(integer id, integer handle)                       \
 {                                                                           \
@@ -89,9 +95,17 @@ list _bxAsyncExpire##tgrp(integer id, integer handle)                       \
  * @param tgrp void The name of the timer group created with BOX_TIMER_GROUP.
  * @param channel integer The channel parameter from the listen event.
  * @param sender key The UUID of the message sender.
- * @returns An empty list if no requests completed, or [channel, type].
+ * @returns The type of the request started with bxAsyncBegin, or 0 if no
+ *          request matches.
  */
-#define bxAsyncFinish(tgrp, channel, sender) _bxAsyncFinish##tgrp(channel, sender)
+#define bxAsyncFinishing(tgrp, channel, sender) _bxAsyncFinishing##tgrp(channel, sender)
+
+/**
+ * Remove an async timer and listen.
+ * @param tgrp void The tgrp of the timer group created with BOX_TIMER_GROUP.
+ * @param channel integer The channel parameter from the listen event.
+ */
+#define bxAsyncFinish(tgrp, channel) _bxAsyncFinish##tgrp(channel)
 
 /**
  * Check for any expired outstanding requests.

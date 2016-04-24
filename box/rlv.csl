@@ -41,17 +41,17 @@ _bxRlvFlush##name()                                                     \
     llOwnerSay("@" + llDeleteSubString(_BX_RLVQ(name), 0, 0));          \
     _BX_RLVQ(name) = "";                                                \
 }                                                                       \
-integer _bxRlvFinish##name(integer id)                                  \
+integer _bxRlvFinish##name(integer id, integer channel)                 \
 {                                                                       \
     if (!(id & 0x20000000)) {                                           \
         return 0;                                                       \
     }                                                                   \
-                                                                        \
-    return id & 0x1FFFFFFF;                                             \
+    bxAsyncFinish(tgrp, channel);                                       \
+    return 0x1FFFFFFF & id;                                             \
 }
 
 #define bxRlvFlush(name) _bxRlvFlush##name()
-#define bxRlvFinish(name, id) _bxRlvFinish##name(id)
+#define bxRlvFinish(name, channel, sender) _bxRlvFinish##name(channel, sender)
 
 #define _bxRlvDoKey(cmd, name, uuid, mode)                              \
 do {                                                                    \
