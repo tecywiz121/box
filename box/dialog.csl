@@ -137,18 +137,23 @@ _bxDialogShowShort##name()                                                  \
                  bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE));  \
     } else {                                                                \
         integer pg = _BX_DPG(name) - nMsgPage;                              \
+        integer max = (pg*9)+8;                                             \
+        if (nBtnPage == 1 && nMsgPage == 0) {                               \
+            max = 12;                                                       \
+            btns = [];                                                      \
+        }                                                                   \
         llDialog(_BX_DAV(name),                                             \
                  llList2String(_BX_DMSG(name), nMsgPage),                   \
                  _bxDialogButtonOrder(llList2List(_BX_DCH(name),            \
                                                   pg*9,                     \
-                                                  (pg*9)+8)) + btns,        \
+                                                  max)) + btns,             \
                  bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE));  \
                                                                             \
     }                                                                       \
 }                                                                           \
                                                                             \
-_bxDialogShow##name(integer id,                                             \
-                    float timeout,                                          \
+_bxDialogShow##name(float timeout,                                          \
+                    integer id,                                             \
                     key avatar,                                             \
                     string message,                                         \
                     list buttons)                                           \
@@ -173,11 +178,16 @@ _bxDialogShow##name(integer id,                                             \
     }                                                                       \
 }                                                                           \
                                                                             \
-list _bxDialogFinish##name(integer id, key sender, string message)          \
+list _bxDialogFinish##name(integer type,                                    \
+                           integer channel,                                 \
+                           key sender,                                      \
+                           string message)                                  \
 {                                                                           \
-    if (id != _BX_DID(name) || sender != _BX_DAV(name)) {                   \
+    if (type != _BX_DID(name) || sender != _BX_DAV(name)) {                 \
         return [];                                                          \
     }                                                                       \
+    type = type & 0x07FFFFFF;                                               \
+    bxAsyncFinish(tgrp, channel);                                           \
                                                                             \
     integer reshow = -1;                                                    \
     if (message == BOX_BUTTON_NEXT) {                                       \
@@ -197,7 +207,7 @@ list _bxDialogFinish##name(integer id, key sender, string message)          \
                                           (integer)message);                \
             _BX_DMSG(name) = [];                                            \
             _BX_DAV(name) = "";                                             \
-            return [result];                                                \
+            return [result, type];                                          \
         }                                                                   \
     } else {                                                                \
         if (reshow < 0) {                                                   \
@@ -206,13 +216,26 @@ list _bxDialogFinish##name(integer id, key sender, string message)          \
         } else {                                                            \
             _BX_DMSG(name) = [];                                            \
             _BX_DAV(name) = "";                                             \
-            return [_bxDialogUnescape(message)];                            \
+            return [_bxDialogUnescape(message), type];                      \
         }                                                                   \
     }                                                                       \
+}                                                                           \
+key _bxDialogExpire##name(integer type)                                     \
+{                                                                           \
+    if (type != _BX_DID(name)) {                                            \
+        return NULL_KEY;                                                    \
+    }                                                                       \
+    _BX_DCH(name) = [];                                                     \
+    _BX_DID(name) = 0;                                                      \
+    key av = _BX_DAV(name);                                                 \
+    _BX_DAV(name) = NULL_KEY;                                               \
+    _BX_DMSG(name) = [];                                                    \
+    _BX_DTM(name) = 0.0;                                                    \
+    return av;                                                              \
 }
 
-#define bxDialogShow(name, id, avatar, message, buttons)
-#define bxDialogFinish(name, channel, sender)
-#define bxDialogExpire(name, handle)
+#define bxDialogShow(name, timeout, id, avatar, message, buttons) _bxDialogShow##name(timeout, id, avatar, message, buttons)
+#define bxDialogFinish(name, type, channel, sender, message) _bxDialogFinish##name(type, channel, sender, message)
+#define bxDialogExpire(name, type) _bxDialogExpire##name(type)
 
 #endif /* BOX_DIALOG_CSL */
