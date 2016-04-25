@@ -102,7 +102,45 @@ float _BX_DTM(name);                                                        \
                                                                             \
 _bxDialogShowLong##name()                                                   \
 {                                                                           \
+    integer nMsgPage = llGetListLength(_BX_DMSG(name));                     \
+    integer nBtnPage = (llGetListLength(_BX_DCH(name))+8)/9;                \
+    list btns;                                                              \
+    if (_BX_DPG(name) == 0) {                                               \
+        btns = [BOX_STR_ZWS];                                               \
+    } else {                                                                \
+        btns = [BOX_BUTTON_BACK];                                           \
+    }                                                                       \
                                                                             \
+    btns += [BOX_BUTTON_MID_LABEL];                                         \
+    integer nPage = nMsgPage + nBtnPage;                                    \
+    if (_BX_DPG(name) < nPage-1) {                                          \
+        btns += [BOX_BUTTON_NEXT];                                          \
+    } else {                                                                \
+        btns += [BOX_STR_ZWS];                                              \
+    }                                                                       \
+    if (_BX_DPG(name) < nMsgPage) {                                         \
+        llDialog(_BX_DAV(name),                                             \
+                 llList2String(_BX_DMSG(name), _BX_DPG(name)),              \
+                 btns,                                                      \
+                 bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE));  \
+    } else {                                                                \
+        integer pg = _BX_DPG(name) - nMsgPage;                              \
+        list choices;                                                       \
+        integer ii;                                                         \
+        integer count = llGetListLength(_BX_DCH(name)) - (pg*9);            \
+        if (count > 9) { count = 9; }                                       \
+        string msg = "";                                                    \
+        for (ii = 0; ii < count; ii++) {                                    \
+            integer idx = (pg*9)+ii;                                        \
+            msg += llBase64ToString(llGetSubString(llStringToBase64((string)idx + " - " + llList2String(_BX_DCH(name), idx)), 0, 70)) + "\n"; \
+            choices += [(string)idx];                                       \
+        }                                                                   \
+        llDialog(_BX_DAV(name),                                             \
+                 msg,                                                       \
+                 _bxDialogButtonOrder(choices) + btns,                      \
+                 bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE));  \
+                                                                            \
+    }                                                                       \
 }                                                                           \
 _bxDialogShowShort##name()                                                  \
 {                                                                           \
