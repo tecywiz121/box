@@ -1,0 +1,20 @@
+#ifndef BOX_UTIL_CSL
+#define BOX_UTIL_CSL 1
+
+/**
+ * Returns the current owner, or the avatar that deeded the object if group owned.
+ * @returns The avatar that deeded the object to the group, or llGetOwner.
+ */
+key bxGetOwnerAvatar()
+{
+    list details = llGetObjectDetails(llGetKey(), [OBJECT_OWNER, OBJECT_LAST_OWNER_ID]);
+    key owner = llList2Key(details, 0);
+    if (owner != NULL_KEY) {
+        return owner;
+    } else {
+        return llList2Key(details, 1);
+    }
+}
+
+
+#endif /* BOX_UTIL_CSL */

@@ -3,6 +3,7 @@
 
 #include <box/memory.csl>
 #include <box/timer.csl>
+#include <box/util.csl>
 
 /**
  * Add async message support to a timer group.
@@ -18,7 +19,7 @@ integer _bxAsyncBegin##tgrp(integer type, float timeout, integer owner_only)\
     key sender = NULL_KEY;                                                  \
     if (owner_only) {                                                       \
         type = type | 0x80000000;                                           \
-        sender = llGetOwner();                                              \
+        sender = bxGetOwnerAvatar();                                        \
     }                                                                       \
                                                                             \
     /* Start expiry timer */                                                \
@@ -39,7 +40,7 @@ integer _bxAsyncFinishing##tgrp(integer channel, key sender)                \
     /* Check if we're an owner only listen */                               \
     if (id & 0x80000000) {                                                  \
         id = id & 0x7FFFFFFF;                                               \
-        if (sender != llGetOwner()) {                                       \
+        if (sender != bxGetOwnerAvatar()) {                                 \
             return FALSE;                                                   \
         }                                                                   \
     }                                                                       \
@@ -57,7 +58,7 @@ _bxAsyncFinish##tgrp(integer channel)                                       \
     if (0 != (id = bxTimerStopOnce(tgrp, channel))) {                       \
         key sender = NULL_KEY;                                              \
         if (id & 0x80000000) {                                              \
-            sender = llGetOwner();                                          \
+            sender = bxGetOwnerAvatar();                                    \
         }                                                                   \
         /* Get original handle by calling llListen with same arguments */   \
         llListenRemove(llListen(channel, "", sender, ""));                  \
@@ -67,7 +68,7 @@ list _bxAsyncExpire##tgrp(integer id, integer handle)                       \
 {                                                                           \
     key sender = NULL_KEY;                                                  \
     if (id & 0x80000000) {                                                  \
-        sender = llGetOwner();                                              \
+        sender = bxGetOwnerAvatar();                                        \
         id = id & 0x7FFFFFFF;                                               \
     }                                                                       \
     if (id < 0x40000000) {                                                  \

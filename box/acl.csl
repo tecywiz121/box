@@ -1,0 +1,264 @@
+#ifndef BOX_ACL_CSL
+#define BOX_ACL_CSL 1
+
+#include <box/string.csl>
+#include <box/util.csl>
+#include <box/timer.csl>
+#include <box/async.csl>
+
+#define _BX_ACL(name) __bxAcl##name
+#define _BX_ACL_WAIT(name) __bxAclWait##name
+
+#define BOX_ACL_PERM_ALLOW_FOREVER      (1)
+#define BOX_ACL_PERM_ALLOW_TEMPORARY    (2)
+#define BOX_ACL_PERM_DENY_FOREVER       (-1)
+#define BOX_ACL_PERM_DENY_TEMPORARY     (-2)
+
+#define _BX_ACL_STRIDE  (2)
+#define _bxAclGetKey(name, idx) ((key)llList2String(_BX_ACL(name), (idx*_BX_ACL_STRIDE)))
+#define _bxAclGetPermission(name, idx) (llList2Integer(_BX_ACL(name), 1+(idx*_BX_ACL_STRIDE)))
+
+#define _BX_ACL_WAIT_STRIDE (3)
+#define _bxAclWaitGetHandle(name, idx) llList2Integer(_BX_ACL_WAIT(name), (idx*_BX_ACL_WAIT_STRIDE))
+#define _bxAclWaitGetSender(name, idx) llList2Key(_BX_ACL_WAIT(name), 1+(idx*_BX_ACL_WAIT_STRIDE))
+#define _bxAclWaitGetArgs(name, idx) llList2String(_BX_ACL_WAIT(name), 2+(idx*_BX_ACL_WAIT_STRIDE))
+
+string _bxAclGetUsername(key id)
+{
+    string name = llGetUsername(id);
+    if ("" == name) {
+        // Use a viewer URL to get the name without a dataserver query
+        name = "secondlife:///app/agent/" + (string)id + "/username";
+    }
+    return name;
+}
+
+string _bxAclGetDialogMessage(key sender, list details)
+{
+    vector agent = llGetAgentSize(sender);
+    if (ZERO_VECTOR == agent) {
+        string name = "'" + llList2String(details, 0) + "'";
+        key owner = llList2Key(details, 1);
+        key group = llList2Key(details, 2);
+
+        if (NULL_KEY == owner) {
+            if (NULL_KEY != group) {
+                name += " owned by the group secondlife:///app/group/" + (string) group + "/inspect";
+            }
+        } else {
+            name += " owned by '" + _bxAclGetUsername(owner) + "'";
+        }
+
+        return "The object " + name + " is requesting access to this object.";
+    } else {
+        return "The user '" + _bxAclGetUsername(sender) + "' is requesting access to this object.";
+    }
+}
+
+list _bxAclGetDialogButtons(key sender, list details)
+{
+    // TODO: Provide options for allowing/denying the group, owner, etc.
+    list x = ["Deny Now",
+              "Deny Forever",
+              BOX_STR_ZWS,
+              "Allow Now",
+              "Allow Forever"];
+    return x;
+}
+
+/**
+ * Create an Access Control List.
+ * @param name void The name of the list.
+ * @param tgrp void A timer group created with BOX_TIMER_GROUP.
+ * @param async_type integer A unique integer to use as the async type.
+ * @param allow_cb function A function to call when a command passes the ACL.
+ * @param deny_cb function A function to call when a command fails the ACL.
+ */
+#define BOX_ACL(name, tgrp, async_type, allow_cb, deny_cb)                  \
+list _BX_ACL(name);                                                         \
+list _BX_ACL_WAIT(name);                                                    \
+integer _bxAclGet##name(key sender)                                         \
+{                                                                           \
+    if (NULL_KEY == sender) {                                               \
+        return 0;                                                           \
+    }                                                                       \
+    integer idx = llListFindList(_BX_ACL(name), [(string)sender]);          \
+    if (0 > idx) {                                                          \
+        return 0;                                                           \
+    }                                                                       \
+    return llList2Integer(_BX_ACL(name), idx+1);                            \
+}                                                                           \
+_bxAclDo##name(float timeout, key sender, string args)                      \
+{                                                                           \
+    if (llListFindList(_BX_ACL_WAIT(name), [sender]) >= 0) {                \
+        _BX_ACL_WAIT(name) += [0, sender, args];                            \
+        return;                                                             \
+    }                                                                       \
+    list details = llGetObjectDetails(sender,                               \
+                                      [OBJECT_NAME,                         \
+                                       OBJECT_OWNER,                        \
+                                       OBJECT_GROUP]);                      \
+    list tests = [sender] + llList2List(details, 1, 2);                     \
+                                                                            \
+    integer ii;                                                             \
+    for (ii = 0; ii < 3; ii++) {                                            \
+        integer perm = _bxAclGet##name(llList2Key(tests, ii));              \
+        if (perm < 0) {                                                     \
+            deny_cb(sender, args);                                          \
+            return;                                                         \
+        } else if (perm > 0) {                                              \
+            allow_cb(sender, args);                                         \
+            return;                                                         \
+        }                                                                   \
+    }                                                                       \
+    integer channel = bxAsyncBegin(tgrp, (async_type), timeout, TRUE);      \
+    _BX_ACL_WAIT(name) += [channel, sender, args];                          \
+    llDialog(bxGetOwnerAvatar(),                                            \
+             _bxAclGetDialogMessage(sender, details),                       \
+             _bxAclGetDialogButtons(sender, details),                       \
+             channel);                                                      \
+}                                                                           \
+_bxAclSet##name(key sender, integer mode)                                   \
+{                                                                           \
+    integer idx = llListFindList(_BX_ACL(name), [(string)sender]);          \
+    if (0 <= idx) {                                                         \
+        _BX_ACL(name) = llListReplaceList(bxMove(_BX_ACL(name)),            \
+                                          [mode],                           \
+                                          idx+1,                            \
+                                          idx+1);                           \
+    } else {                                                                \
+        _BX_ACL(name) += [(string)sender, mode];                            \
+    }                                                                       \
+}                                                                           \
+integer _bxAclFinish##name(integer type,                                    \
+                           integer channel,                                 \
+                           key sender,                                      \
+                           string message)                                  \
+{                                                                           \
+    if (type != (async_type) || sender != bxGetOwnerAvatar()) {             \
+        return FALSE;                                                       \
+    }                                                                       \
+                                                                            \
+    integer idx;                                                            \
+    if (0 > (idx = llListFindList(_BX_ACL_WAIT(name), [channel]))) {        \
+        return FALSE;                                                       \
+    }                                                                       \
+    idx = idx / _BX_ACL_WAIT_STRIDE;                                        \
+    key orig = _bxAclWaitGetSender(name, idx);                              \
+                                                                            \
+    integer perm;                                                           \
+    if (message == "Allow Now") {                                           \
+        perm = BOX_ACL_PERM_ALLOW_TEMPORARY;                                \
+    } else if (message == "Allow Forever") {                                \
+        perm = BOX_ACL_PERM_ALLOW_FOREVER;                                  \
+    } else if (message == "Deny Now") {                                     \
+        perm = BOX_ACL_PERM_DENY_TEMPORARY;                                 \
+    } else if (message == "Deny Forever") {                                 \
+        perm = BOX_ACL_PERM_DENY_FOREVER;                                   \
+    } else if (message == BOX_STR_ZWS) {                                    \
+        list details = llGetObjectDetails(sender,                           \
+                                          [OBJECT_NAME,                     \
+                                           OBJECT_OWNER,                    \
+                                           OBJECT_GROUP]);                  \
+        llDialog(sender,                                                    \
+                 _bxAclGetDialogMessage(orig, details),                     \
+                 _bxAclGetDialogButtons(orig, details),                     \
+                 channel);                                                  \
+        return FALSE;                                                       \
+    } else {                                                                \
+        return FALSE;                                                       \
+    }                                                                       \
+                                                                            \
+    _bxAclSet##name(orig, perm);                                            \
+    integer otherIdx;                                                       \
+    if (perm > 0) {                                                         \
+        while (0 <= (otherIdx=llListFindList(_BX_ACL_WAIT(name),[orig]))) { \
+            allow_cb(orig, llList2String(_BX_ACL_WAIT(name),otherIdx+1));   \
+            _BX_ACL_WAIT(name) = llDeleteSubList(bxMove(_BX_ACL_WAIT(name)),\
+                                                 otherIdx-1,                \
+                                                 otherIdx+1);               \
+        }                                                                   \
+    } else if (perm < 0) {                                                  \
+        while (0 <= (otherIdx=llListFindList(_BX_ACL_WAIT(name),[orig]))) { \
+            deny_cb(orig, llList2String(_BX_ACL_WAIT(name),otherIdx+1));    \
+            _BX_ACL_WAIT(name) = llDeleteSubList(bxMove(_BX_ACL_WAIT(name)),\
+                                                 otherIdx-1,                \
+                                                 otherIdx+1);               \
+        }                                                                   \
+    }                                                                       \
+    bxAsyncFinish(tgrp, channel);                                           \
+    return TRUE;                                                            \
+}                                                                           \
+integer _bxAclExpire##name(integer type, integer channel)                   \
+{                                                                           \
+    if (type != (async_type)) {                                             \
+        return FALSE;                                                       \
+    }                                                                       \
+    integer idx;                                                            \
+    if (0 > (idx = llListFindList(_BX_ACL_WAIT(name), [channel]))) {        \
+        return FALSE;                                                       \
+    }                                                                       \
+    idx = idx / _BX_ACL_WAIT_STRIDE;                                        \
+    key orig = _bxAclWaitGetSender(name, idx);                              \
+    integer otherIdx;                                                       \
+    while (0 <= (otherIdx=llListFindList(_BX_ACL_WAIT(name),[orig]))) {     \
+        deny_cb(orig, llList2String(_BX_ACL_WAIT(name),otherIdx+1));        \
+        _BX_ACL_WAIT(name) = llDeleteSubList(bxMove(_BX_ACL_WAIT(name)),    \
+                                             otherIdx-1,                    \
+                                             otherIdx+1);                   \
+    }                                                                       \
+    return TRUE;                                                            \
+}
+
+
+
+/**
+ * Explicitly set the permissions for the given key.
+ * @param acl void The name of the ACL as created by BOX_ACL.
+ * @param sender key The key to change permissions for.
+ * @param mode integer The permission. See BOX_ACL_PERM_*.
+ */
+#define bxAclSet(acl, sender, mode) _bxAclSet##acl(sender, mode)
+
+/**
+ * Get the permissions for the given key.
+ * @param acl void The name of the ACL as created by BOX_ACL.
+ * @param sender key The key to get permissions for.
+ * @returns One of the BOX_ACL_PERM_* constants.
+ */
+#define bxAclGet(acl, sender) _bxAclGet##acl(sender)
+
+/**
+ * Shortcut to check if a given key is permitted.
+ * @param acl void The name of the ACL as created by BOX_ACL.
+ * @param sender key The key to get permissions for.
+ * @returns TRUE if allow, FALSE if not.
+ */
+#define bxAclCheck(acl, sender) (0 < _bxAclGet##acl(sender))
+
+/**
+ * Checks the given key, the key's owner, and the key's group against the ACL.
+ * If no permissions are found, displays a dialog asking for the owner's
+ * permission. Once completed, it calls allow_cb, or deny_cb as appropriate.
+ * @param acl void The name of the ACL as created by BOX_ACL.
+ * @param sender key The key performing the action.
+ * @param action string The action to pass to allow_cb or deny_cb.
+ */
+#define bxAclDo(acl, timeout, sender, action) _bxAclDo##acl(timeout, sender, action)
+
+/**
+ * Resets the ACL.
+ */
+#define bxAclClear(acl) do { _BX_ACL(acl) = []; } while (0)
+
+/**
+ * Called from inside the listen event.
+ */
+#define bxAclFinish(acl, type, channel, sender, message) _bxAclFinish##acl(type, channel, sender, message)
+
+/**
+ * Called from inside the timer event.
+ */
+#define bxAclExpire(acl, type, channel) _bxAclExpire##acl(type, channel)
+
+#endif /* BOX_ACL_CSL */
