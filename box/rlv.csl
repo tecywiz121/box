@@ -51,7 +51,7 @@ integer _bxRlvFinish##name(integer id, integer channel)                 \
 }
 
 #define bxRlvFlush(name) _bxRlvFlush##name()
-#define bxRlvFinish(name, channel, sender) _bxRlvFinish##name(channel, sender)
+#define bxRlvFinish(name, type, channel) _bxRlvFinish##name(type, channel)
 
 #define _bxRlvDoKey(cmd, name, uuid, mode)                              \
 do {                                                                    \
