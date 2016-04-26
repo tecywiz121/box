@@ -112,8 +112,15 @@ list _bxAsyncExpire##tgrp(integer id, integer handle)                       \
  * @param name void The name of the timer group created with BOX_TIMER_GROUP.
  * @param id integer The id as returned by bxTimerTick.
  * @param handle integer The handle as returned by bxTimerTick.
- * @returns A list of [channel, type] if there ar
+ * @returns A strided list of [channel, type]
  */
 #define bxAsyncExpire(tgrp, id, handle) _bxAsyncExpire##tgrp(id, handle)
+
+/**
+ * Shortcut for bxAsyncExpire from inside of BOX_TIMER_FOR_EACH.
+ * @param name void The name of the timer group created with BOX_TIMER_GROUP.
+ * @returns A strided list of [channel, type]
+ */
+#define bxAsyncExpireEvent(tgrp) bxAsyncExpire(tgrp, bxTimerEventId(tgrp), bxTimerEventHandle(tgrp))
 
 #endif /* BOX_ASYNC_CSL */
