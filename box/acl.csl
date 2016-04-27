@@ -15,6 +15,7 @@
 #define BOX_ACL_PERM_DENY_TEMPORARY     (-2)
 
 #define _BX_ACL_STRIDE  (2)
+#define _bxAclLength(name) (llGetListLength(_BX_ACL(name)) / _BX_ACL_STRIDE)
 #define _bxAclGetKey(name, idx) ((key)llList2String(_BX_ACL(name), (idx*_BX_ACL_STRIDE)))
 #define _bxAclGetPermission(name, idx) (llList2Integer(_BX_ACL(name), 1+(idx*_BX_ACL_STRIDE)))
 
@@ -208,6 +209,19 @@ integer _bxAclExpire##name(integer type, integer channel)                   \
                                              otherIdx+1);                   \
     }                                                                       \
     return TRUE;                                                            \
+}                                                                           \
+_bxAclClearTemporary##name()                                                \
+{                                                                           \
+    integer ii;                                                             \
+    for (ii = _bxAclLength(name)-1; ii >= 0; ii--) {                        \
+        integer perm = _bxAclGetPermission(name, ii);                       \
+        if (BOX_ACL_PERM_ALLOW_TEMPORARY == perm                            \
+            || BOX_ACL_PERM_DENY_TEMPORARY == perm) {                       \
+            _BX_ACL(name) = llDeleteSubList(bxMove(_BX_ACL(name)),          \
+                                            (ii*_BX_ACL_STRIDE),            \
+                                            ((ii+1)*_BX_ACL_STRIDE)-1);     \
+        }                                                                   \
+    }                                                                       \
 }
 
 
@@ -260,5 +274,11 @@ integer _bxAclExpire##name(integer type, integer channel)                   \
  * Called from inside the timer event.
  */
 #define bxAclExpire(acl, type, channel) _bxAclExpire##acl(type, channel)
+
+/**
+ * Remove all temporary permissions, leaving the rest in place.
+ * @param acl void The name of the ACL as created by BOX_ACL.
+ */
+#define bxAclClearTemporary(acl) _bxAclClearTemporary##acl()
 
 #endif /* BOX_ACL_CSL */
