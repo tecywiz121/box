@@ -1,0 +1,84 @@
+#ifndef BOX_REFLECTION_CSL
+#define BOX_REFLECTION_CSL 1
+
+#define BOX_REFLECT_FUNCTIONS list bxApply(string __bxRefName, list __bxRefArgs) {
+#define BOX_REFLECT_FUNCTIONS_END return []; }
+
+#define BOX_REFLECT_VOID_FUNC_0(func)               if (__bxRefName == #func) { func(); return []; }
+#define BOX_REFLECT_VOID_FUNC_1(func, a1)           if (__bxRefName == #func) { func(llList2##a1(__bxRefArgs, 0)); return []; }
+#define BOX_REFLECT_VOID_FUNC_2(func, a1, a2)       if (__bxRefName == #func) { func(llList2##a1(__bxRefArgs, 0), llList2##a2(__bxRefArgs, 1)); return []; }
+#define BOX_REFLECT_VOID_FUNC_3(func, a1, a2, a3)   if (__bxRefName == #func) { func(llList2##a1(__bxRefArgs, 0), llList2##a2(__bxRefArgs, 1), llList2##a3(__bxRefArgs, 2)); return []; }
+
+#define BOX_REFLECT_FUNC_0(func)                    if (__bxRefName == #func) { return [] + func(); }
+#define BOX_REFLECT_FUNC_1(func, a1)                if (__bxRefName == #func) { return [] + func(llList2##a1(__bxRefArgs, 0)); }
+#define BOX_REFLECT_FUNC_2(func, a1, a2)            if (__bxRefName == #func) { return [] + func(llList2##a1(__bxRefArgs, 0), llList2##a2(__bxRefArgs, 1)); }
+#define BOX_REFLECT_FUNC_3(func, a1, a2, a3)        if (__bxRefName == #func) { return [] + func(llList2##a1(__bxRefArgs, 0), llList2##a2(__bxRefArgs, 1), llList2##a3(__bxRefArgs, 2)); }
+
+#define BOX_REFLECT_VALUES list bxGetSet(string __bxRefName, integer __bxRefSet, list __bxRefVal) { list __bxRet;
+#define BOX_REFLECT_VALUES_END return __bxRet; }
+
+#define BOX_REFLECT_VALUE(name, type)       \
+if (__bxRefName == #name) {                 \
+    __bxRet = [name];                       \
+    if (__bxRefSet) {                       \
+        name = llList2##type(__bxRefVal, 0);\
+    }                                       \
+}
+
+#define BOX_REFLECT_LIST(name)              \
+if (__bxRefName == #name) {                 \
+    __bxRet = name;                         \
+    if (__bxRefSet) {                       \
+        name = __bxRefVal;                  \
+    }                                       \
+}
+
+#define bxGet(name) bxGetSet((name), FALSE, [])
+#define bxGetInt(name) llList2Integer(bx_get(name), 0)
+#define bxGetStr(name) llList2String(bx_get(name), 0)
+#define bxGetKey(name) llList2Key(bx_get(name), 0)
+#define bxGetVec(name) llList2Vector(bx_get(name), 0)
+#define bxGetRot(name) llList2Rot(bx_get(name), 0)
+#define bxGetFloat(name) llList2Float(bx_get(name), 0)
+
+#define bxSet(name, value) bxGetSet((name), TRUE, [] + (value))
+
+/** Usage Example:
+ *
+ * #include <box/reflection.csl>
+ *
+ * list testList;
+ *
+ * testFunc1(key id)
+ * {
+ *     llOwnerSay("testFunc1: " + (string)id);
+ * }
+ *
+ * testFunc0()
+ * {
+ *     llOwnerSay("testFunc0");
+ * }
+ *
+ * // Register functions we want to use with bxApply
+ * BOX_REFLECT_FUNCTIONS
+ *     BOX_REFLECT_VOID_FUNC_0(testFunc0)
+ *     BOX_REFLECT_VOID_FUNC_1(testFunc1, Key)
+ * BOX_REFLECT_FUNCTIONS_END
+ *
+ * // Register variables we want to use with bxGet/bxSet
+ * BOX_REFLECT_VALUES
+ *     BOX_REFLECT_LIST(testList)
+ * BOX_REFLECT_VALUES_END
+ *
+ * default
+ * {
+ *     touch_start(integer n)
+ *     {
+ *         bxApply("testFunc1", [llGetOwner()]);
+ *         bxSet("testList", (["banana", "orange"]));
+ *         llOwnerSay(llDumpList2String(bxGet("testList"), ","));
+ *     }
+ * }
+ */
+
+#endif /* BOX_REFLECTION_CSL */
