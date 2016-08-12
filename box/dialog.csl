@@ -173,6 +173,10 @@ _bxDialogShowShort##name()                                                  \
                  llList2String(_BX_DMSG(name), _BX_DPG(name)),              \
                  btns,                                                      \
                  bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE));  \
+    } else if (llList2String(_BX_DCH(name), 0) == "!!llTextBox!!") {        \
+        llTextBox(_BX_DAV(name),                                            \
+                  llList2String(_BX_DMSG(name), nMsgPage),                  \
+                  bxAsyncBegin(tgrp, _BX_DID(name), _BX_DTM(name), FALSE)); \
     } else {                                                                \
         integer pg = _BX_DPG(name) - nMsgPage;                              \
         integer max = (pg*9)+8;                                             \
@@ -214,6 +218,26 @@ _bxDialogShow##name(float timeout,                                          \
         _BX_DCH(name) = _bxDialogEscapeAll(bxMove(_BX_DCH(name)));          \
         _bxDialogShowShort##name();                                         \
     }                                                                       \
+}                                                                           \
+_bxDialogShowTextBox##name(float timeout,                                   \
+                           integer id,                                      \
+                           key avatar,                                      \
+                           string message)                                  \
+{                                                                           \
+    _BX_DPG(name) = 0;                                                      \
+    _BX_DCH(name) = ["!!llTextBox!!"];                                      \
+    _BX_DID(name) = (id & 0x7FFFFFFF) | 0x10000000;                         \
+    _BX_DAV(name) = avatar;                                                 \
+    _BX_DMSG(name) = [];                                                    \
+    _BX_DTM(name) = timeout;                                                \
+                                                                            \
+    /* Split message into 128 character chunks to avoid 512 byte limit. */  \
+    do {                                                                    \
+        _BX_DMSG(name) += [llGetSubString(message, 0, 127)];                \
+        message = llDeleteSubString(message, 0, 127);                       \
+    } while ("" != message);                                                \
+                                                                            \
+    _bxDialogShowShort##name();                                             \
 }                                                                           \
                                                                             \
 list _bxDialogFinish##name(integer type,                                    \
@@ -275,5 +299,6 @@ key _bxDialogExpire##name(integer type)                                     \
 #define bxDialogShow(name, timeout, id, avatar, message, buttons) _bxDialogShow##name(timeout, id, avatar, message, buttons)
 #define bxDialogFinish(name, type, channel, sender, message) _bxDialogFinish##name(type, channel, sender, message)
 #define bxDialogExpire(name, type) _bxDialogExpire##name(type)
+#define bxDialogShowTextBox(name, timeout, id, avatar, message) _bxDialogShowTextBox##name(timeout, id, avatar, message)
 
 #endif /* BOX_DIALOG_CSL */

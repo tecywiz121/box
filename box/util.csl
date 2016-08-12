@@ -16,5 +16,28 @@ key bxGetOwnerAvatar()
     }
 }
 
+string bxList2Str(list in, string sep)
+{
+    string r;
+    integer c;
+    while (1 < (c = llGetListLength(in))) {
+        r += llEscapeURL(llList2String(in, 0)) + sep;
+        in = llDeleteSubList(in, 0, 0);
+    }
+    if (1 == c) {
+        r += llEscapeURL(llList2String(in, 0));
+    }
+    return r;
+}
+
+list bxStr2List(string in, string sep)
+{
+    list r = llParseStringKeepNulls(in, [sep], []);
+    integer ii;
+    for (ii = llGetListLength(r)-1; ii >= 0; ii--) {
+        r = llListReplaceList(r, [llUnescapeURL(llList2String(r, ii))], ii, ii);
+    }
+    return r;
+}
 
 #endif /* BOX_UTIL_CSL */
